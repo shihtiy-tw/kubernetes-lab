@@ -1,47 +1,214 @@
-#!/bin/bash
-# source $(pwd)/../config.sh 1.29 us-east-1 full
+#!/usr/bin/env bash
+# Create an EKS cluster using eksctl
+# CLI 12-Factor Compliant
 
-source "$PWD"/scripts/config.sh "$1" "$2" "$3"
-source "$PWD"/config/.env
+set -euo pipefail
 
-export CLUSTER_FILE_LOCATION="$(echo "$1"| sed 's/\./-/')"
-# TODO: change the eksctil file as eksctl-*.yaml for schema
-export CLUSTER_FILE="$PWD/versions/$(echo "$CLUSTER_FILE_LOCATION")/${EKS_CLUSTER_NAME}-${EKS_CLUSTER_REGION}.yaml"
+SCRIPT_VERSION="2.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-mkdir -p "$PWD/versions/""$(echo "$CLUSTER_FILE_LOCATION")"
-
-# ANSI color codes
+# Colors
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Color
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
 
-printf "${BLUE}EKS Cluster Configuration Summary:\n"
-printf "${BLUE}--------------------------------${NC}\n"
-printf "${GREEN}%-20s${NC}%s\n" "Cluster Name:" "$EKS_CLUSTER_NAME"
-printf "${GREEN}%-20s${NC}%s\n" "Cluster Version:" "$CLUSTER_VERSION"
-printf "${GREEN}%-20s${NC}%s\n" "Region:" "$EKS_CLUSTER_REGION"
-printf "${GREEN}%-20s${NC}%s\n" "Availability Zones:" "$AZ_ARRAY"
-printf "${GREEN}%-20s${NC}%s\n" "IAM User:" "$IAM_USER"
-printf "${GREEN}%-20s${NC}%s\n" "Secret Key ARN:" "$SECRET_KEY_ARN"
-printf "${GREEN}%-20s${NC}%s\n" "Cluster Config:" "$CLUSTER_CONFIG"
-printf "${GREEN}%-20s${NC}%s\n" "Cluster YAML File:" "$CLUSTER_FILE"
-printf "${BLUE}--------------------------------${NC}\n"
+show_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
 
+Create an EKS cluster using eksctl with template configuration.
 
-cat "$PWD/clusters/eksctl-cluster-$CLUSTER_CONFIG".yaml | envsubst '${EKS_CLUSTER_NAME},${EKS_CLUSTER_REGION},${CLUSTER_VERSION},${AZ_ARRAY},${IAM_USER},${SECRET_KEY_ARN}' > "$CLUSTER_FILE"
+OPTIONS:
+    --version K8S_VER     Kubernetes version (e.g., 1.29)
+    --region REGION       AWS region (default: us-east-1)
+    --config TYPE         Cluster config type: minimal, standard, full (default: standard)
+    --name NAME           Cluster name (default: from .env file)
+    --dry-run             Validate template without creating
+    --output-file PATH    Write generated YAML to file
+    -h, --help            Show this help message
+    -v, --version         Show script version
 
-# Capture both stdout and stderr, and store the exit status
-printf "${BLUE}Validating the template...${NC}\n"
-output=$(eksctl create cluster -f "$CLUSTER_FILE" --dry-run 2>&1)
-exit_status=$?
+EXAMPLES:
+    # Create cluster with defaults
+    $(basename "$0") --version 1.29
 
-# Check the exit status
-if [ "$exit_status" -ne 0 ]; then
-  echo -e "\n${RED}Template validation failed${NC}"
-  # Print the captured output
-  echo "$output"
-else
-  echo -e "\n${GREEN}Tempalte validation succeeded${NC}"
-  echo -e "\n${GREEN}Executing eksctl command:${NC}"
-  eksctl create cluster -f "$CLUSTER_FILE"
+    # Create in specific region
+    $(basename "$0") --version 1.29 --region us-west-2
+
+    # Dry run to validate
+    $(basename "$0") --version 1.29 --dry-run
+
+    # Use full configuration
+    $(basename "$0") --version 1.29 --config full
+EOF
+}
+
+show_version() {
+    echo "$(basename "$0") version ${SCRIPT_VERSION}"
+}
+
+# Logging
+log_info() { echo -e "${BLUE}[INFO]${NC} $*" >&1; }
+log_success() { echo -e "${GREEN}[OK]${NC} $*" >&1; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_step() { echo -e "\n${YELLOW}=== $* ===${NC}" >&1; }
+
+# Defaults
+K8S_VERSION=""
+REGION="us-east-1"
+CONFIG_TYPE="standard"
+CLUSTER_NAME=""
+DRY_RUN=false
+OUTPUT_FILE=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --version)
+            K8S_VERSION="$2"
+            shift 2
+            ;;
+        --region)
+            REGION="$2"
+            shift 2
+            ;;
+        --config)
+            CONFIG_TYPE="$2"
+            shift 2
+            ;;
+        --name)
+            CLUSTER_NAME="$2"
+            shift 2
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --output-file)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--version)
+            show_version
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            echo "Run '$(basename "$0") --help' for usage." >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Validate required args
+if [[ -z "$K8S_VERSION" ]]; then
+    log_error "Kubernetes version required. Use --version"
+    exit 1
 fi
+
+# Load environment config
+load_config() {
+    local config_file="$PROJECT_DIR/clusters/config/.env"
+    
+    if [[ -f "$config_file" ]]; then
+        # shellcheck source=/dev/null
+        source "$config_file"
+    fi
+    
+    # Use provided name or fall back to env
+    CLUSTER_NAME="${CLUSTER_NAME:-${EKS_CLUSTER_NAME:-eks-lab-cluster}}"
+    
+    # Set derived values
+    export EKS_CLUSTER_NAME="$CLUSTER_NAME"
+    export EKS_CLUSTER_REGION="$REGION"
+    export CLUSTER_VERSION="$K8S_VERSION"
+    
+    # Get availability zones
+    AZ_ARRAY=$(aws ec2 describe-availability-zones \
+        --region "$REGION" \
+        --query 'AvailabilityZones[0:3].ZoneName' \
+        --output text | tr '\t' ',')
+    export AZ_ARRAY
+    
+    # Get current IAM user
+    IAM_USER=$(aws sts get-caller-identity --query Arn --output text)
+    export IAM_USER
+    
+    # Secret key ARN (optional)
+    export SECRET_KEY_ARN="${SECRET_KEY_ARN:-}"
+}
+
+main() {
+    log_step "Configuration"
+    
+    load_config
+    
+    log_info "Cluster Name: $CLUSTER_NAME"
+    log_info "K8s Version: $K8S_VERSION"
+    log_info "Region: $REGION"
+    log_info "Config Type: $CONFIG_TYPE"
+    log_info "AZs: $AZ_ARRAY"
+    log_info "IAM User: $IAM_USER"
+    
+    # Find template
+    local template_file="$PROJECT_DIR/clusters/eksctl-cluster-${CONFIG_TYPE}.yaml"
+    
+    if [[ ! -f "$template_file" ]]; then
+        log_error "Template not found: $template_file"
+        log_info "Available configs: minimal, standard, full"
+        exit 1
+    fi
+    
+    # Generate output path
+    local version_dir="$PROJECT_DIR/clusters/versions/$(echo "$K8S_VERSION" | tr '.' '-')"
+    mkdir -p "$version_dir"
+    
+    local output="${OUTPUT_FILE:-${version_dir}/${CLUSTER_NAME}-${REGION}.yaml}"
+    
+    log_step "Generating Cluster Config"
+    log_info "Template: $template_file"
+    log_info "Output: $output"
+    
+    # Generate config using envsubst
+    envsubst '${EKS_CLUSTER_NAME},${EKS_CLUSTER_REGION},${CLUSTER_VERSION},${AZ_ARRAY},${IAM_USER},${SECRET_KEY_ARN}' \
+        < "$template_file" > "$output"
+    
+    log_success "Config generated: $output"
+    
+    log_step "Validating Template"
+    if eksctl create cluster -f "$output" --dry-run > /dev/null 2>&1; then
+        log_success "Template validation passed"
+    else
+        log_error "Template validation failed"
+        eksctl create cluster -f "$output" --dry-run
+        exit 1
+    fi
+    
+    if $DRY_RUN; then
+        log_info "[DRY RUN] Would create cluster with:"
+        cat "$output"
+        exit 0
+    fi
+    
+    log_step "Creating Cluster"
+    log_warn "This will take 15-25 minutes..."
+    
+    if eksctl create cluster -f "$output"; then
+        log_success "Cluster created successfully!"
+        log_info "Get nodes: kubectl get nodes"
+        exit 0
+    else
+        log_error "Cluster creation failed"
+        exit 2
+    fi
+}
+
+main "$@"

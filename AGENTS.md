@@ -16,7 +16,8 @@
 
 ```
 kubernetes-lab/
-├── eks/ ← 🔵 YOU ARE HERE (migrating)
+├── kind/ ← 🟢 LOCAL TESTING
+├── eks/ ← 🔵 ACTIVE (migrated)
 │   ├── addons/
 │   ├── clusters/
 │   ├── scenarios/
@@ -32,6 +33,7 @@ kubernetes-lab/
 | Directory | Purpose |
 |-----------|---------|
 | `shared/` | Cross-platform plugins, manifests, charts |
+| `kind/` | Local testing with kind clusters |
 | `eks/` | AWS EKS implementation |
 | `gke/` | Google GKE implementation |
 | `aks/` | Azure AKS implementation |
