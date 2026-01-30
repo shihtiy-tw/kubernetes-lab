@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: load-balancers
+  labels:
+    name: load-balancers
+    elbv2.k8s.aws/pod-readiness-gate-inject: enabled
