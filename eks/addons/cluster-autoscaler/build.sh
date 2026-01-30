@@ -1,241 +1,301 @@
 #!/usr/bin/env bash
-# ./build.sh
-# ./build.sh <chart version> <app version>
-# ./build.sh 100.2410.0 24.10.0
-# ./build.sh latest
+# Cluster Autoscaler installation for EKS
+# CLI 12-Factor Compliant
 
-# Colors for pretty output
+set -euo pipefail
+
+SCRIPT_VERSION="2.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Environment Variables
-# Get the current context and extract information
-CURRENT_CONTEXT=$(kubectl config current-context)
-EKS_CLUSTER_NAME=$(echo "$CURRENT_CONTEXT" | awk -F: '{split($NF,a,"/"); print a[2]}')
-AWS_REGION=$(echo "$CURRENT_CONTEXT" | awk -F: '{print $4}')
-AWS_ACCOUNT_ID=$(echo "$CURRENT_CONTEXT" | awk -F: '{print $5}')
+show_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Install Cluster Autoscaler on an EKS cluster.
+
+OPTIONS:
+    --chart-version VER   Helm chart version (default: latest)
+    --app-version VER     Application version (default: matches chart)
+    --cluster NAME        EKS cluster name (default: from context)
+    --region REGION       AWS region (default: from context)
+    --namespace NS        Namespace (default: kube-system)
+    --list-versions       List available chart versions and exit
+    --dry-run             Show what would be installed
+    --skip-iam            Skip IAM policy/service account creation
+    --uninstall           Uninstall the autoscaler
+    -h, --help            Show this help message
+    -v, --version         Show script version
+
+EXAMPLES:
+    # List available versions
+    $(basename "$0") --list-versions
+
+    # Install latest version
+    $(basename "$0")
+
+    # Install specific version
+    $(basename "$0") --chart-version 9.29.0 --app-version 1.29.0
+
+    # Dry run for specific cluster
+    $(basename "$0") --cluster my-cluster --dry-run
+EOF
+}
+
+show_version() {
+    echo "$(basename "$0") version ${SCRIPT_VERSION}"
+}
+
+# Logging - separate stdout/stderr
+log_info() { echo -e "${BLUE}[INFO]${NC} $*" >&1; }
+log_success() { echo -e "${GREEN}[OK]${NC} $*" >&1; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_step() { echo -e "\n${YELLOW}=== $* ===${NC}" >&1; }
 
 # Configuration
-IAM_POLICY_NAME="Cluster_Autoscaler_Policy"
-IAM_POLICY_FILENAME="policy.json"
-SERVICE_ACCOUNT_NAME="cluster-autoscaler"
-VPC_ID=$(aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --query 'cluster.resourcesVpcConfig.vpcId' --output text --region "$AWS_REGION")
 NAMESPACE="kube-system"
 APP_NAME="cluster-autoscaler"
-APP_NAME_STRING="Cluster Auto Scaler"
 CHART_NAME="cluster-autoscaler"
-CHART_NAME_STRING="Cluster Auto Scaler"
-CHART_URL="https://kubernetes.github.io/autoscaler"
 REPO_NAME="autoscaler"
-REPO_NAME_STRING="Auto Scaler"
+REPO_URL="https://kubernetes.github.io/autoscaler"
+IAM_POLICY_NAME="Cluster_Autoscaler_Policy"
+SERVICE_ACCOUNT_NAME="cluster-autoscaler"
 
-# Get cluster version
-CLUSTER_VERSION=$(aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION" --output "json" | jq -r '.cluster.version')
-if [ "$CLUSTER_VERSION" = "" ]; then
-  echo -e "${RED}Failed to get cluster version.${NC}"
-  exit 1
-fi
+# Defaults
+CHART_VERSION=""
+APP_VERSION=""
+CLUSTER_NAME=""
+REGION=""
+LIST_VERSIONS=false
+DRY_RUN=false
+SKIP_IAM=false
+UNINSTALL=false
 
-# Pretty print function
-print_info() {
-    printf "${BLUE}%-30s${NC} : ${GREEN}%s${NC}\n" "$1" "$2"
-}
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --chart-version)
+            CHART_VERSION="$2"
+            shift 2
+            ;;
+        --app-version)
+            APP_VERSION="$2"
+            shift 2
+            ;;
+        --cluster)
+            CLUSTER_NAME="$2"
+            shift 2
+            ;;
+        --region)
+            REGION="$2"
+            shift 2
+            ;;
+        --namespace)
+            NAMESPACE="$2"
+            shift 2
+            ;;
+        --list-versions)
+            LIST_VERSIONS=true
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --skip-iam)
+            SKIP_IAM=true
+            shift
+            ;;
+        --uninstall)
+            UNINSTALL=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--version)
+            show_version
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            echo "Run '$(basename "$0") --help' for usage." >&2
+            exit 1
+            ;;
+    esac
+done
 
-# Display environment information
-echo -e "\n${YELLOW}=== Current Environment Configuration ===${NC}\n"
-
-print_info "EKS Cluster Name" "$EKS_CLUSTER_NAME"
-print_info "EKS Cluster Version" "$CLUSTER_VERSION"
-# print_info "VPC ID" "$VPC_ID"
-print_info "AWS Account ID" "$AWS_ACCOUNT_ID"
-print_info "AWS Region" "$AWS_REGION"
-
-echo -e "\n${YELLOW}======================================${NC}\n"
-
-# Step 1: Add EKS Charts repo
-echo -e "${YELLOW}Step 1: Adding $REPO_NAME_STRING repo...${NC}"
-if ! helm repo list | grep -q '$REPO_NAME'; then
-  if helm repo add "$REPO_NAME" "$CHART_URL"; then
-    echo -e "${GREEN}$REPO_NAME_STRING repo added successfully.${NC}"
-  else
-    echo -e "${RED}Failed to add $REPO_NAME_STRING repo.${NC}"
-  fi
-else
-  echo -e "${GREEN}$REPO_NAME_STRING repo already exists.${NC}"
-fi
-
-# Step 2: Update $REPO_NAME_STRING repo
-echo -e "${YELLOW}\nStep 2: Updating $REPO_NAME_STRING repo...${NC}"
-if helm repo update "$REPO_NAME"; then
-  echo -e "${GREEN}$REPO_NAME_STRING repo updated successfully.${NC}"
-else
-  echo -e "${RED}Failed to update $REPO_NAME_STRING repo.${NC}"
-  exit 0
-fi
-
-# Function to get the latest chart version
-get_chart_versions() {
-  # Define color codes using ANSI escape sequences
-  versions=$(helm search repo "$REPO_NAME/$CHART_NAME" --versions --output json |
-           jq -r '.[] | "\(.version),\(.app_version)"' |
-           head -n 10)
-  echo -e "${BLUE}Available versions for $CHART_NAME_STRING:${NC}"
-  echo -e "${GREEN}CHART VERSION   APP VERSION${NC}"
-
-  while IFS=',' read -r chart_version app_version; do
-      printf "%-15s %s\n" "$chart_version" "$app_version"
-  done <<< "$versions"
-}
-
-get_latest_chart_version(){
-  # Fetch the latest chart version
-  version=$(helm search repo "$REPO_NAME/$CHART_NAME" --versions --output json )
-  CHART_VERSION=$(echo "$version"| jq -r '.[0].version')
-
-  # If you also want the corresponding app version:
-  APP_VERSION=$(echo "$version" | jq -r '.[0].app_version')
-}
-
-
-# If no parameter is provided, print all available versions and exit
-if [ $# -eq 0 ]; then
-  echo -e "${YELLOW}\nStep 3: Listing all available helm chart versions for $CHART_NAME_STRING ${CLUSTER_VERSION}:${NC}"
-  CHART_VERSIONS=$(get_chart_versions)
-  echo "$CHART_VERSIONS"
-  exit 0
-fi
-
-# If parameter is 'latest', get the latest version
-if [ "$1" = "latest" ]; then
-  get_latest_chart_version
-  echo -e "${GREEN}Using latest helm chart version: ${CHART_VERSION}${NC}"
-  echo -e "${GREEN}Using latest helm app version: ${APP_VERSION}\n${NC}"
-else
-  CHART_VERSION="$1"
-  APP_VERSION="$2"
-  echo -e "${GREEN}Using specified helm chart version: ${CHART_VERSION}${NC}"
-  echo -e "${GREEN}Using specified helm chart version: ${APP_VERSION}\n${NC}"
-fi
-
-# Step 3: Create IAM policy
-echo -e "${YELLOW}Step 3: Creating IAM policy...${NC}"
-if ! aws iam list-policies --query "Policies[].[PolicyName,UpdateDate]" --output text | grep "$IAM_POLICY_NAME"; then
-  if aws iam create-policy --policy-name "$IAM_POLICY_NAME" --policy-document file://"$IAM_POLICY_FILENAME"; then
-    echo -e "${GREEN}IAM policy created successfully.\n${NC}"
-  else
-    echo -e "${RED}Failed to create IAM policy.${NC}"
-    exit 0
-  fi
-else
-  echo -e "${GREEN}IAM policy already exists.\n${NC}"
-
-  IAM_POLICY_ARN=$(aws iam list-policies \
-    --query "Policies[?PolicyName=='$IAM_POLICY_NAME'].Arn" \
-    --output text)
-
-  if aws iam create-policy-version  \
-    --policy-arn "$IAM_POLICY_ARN" \
-    --policy-document file://"$IAM_POLICY_FILENAME" \
-    --set-as-default \
-    ; then
-    echo -e "${GREEN}IAM policy is updated.\n${NC}"
-  else
-    echo -e "${RED}Failed to update IAM policy.${NC}"
-    exit 0
-  fi
-fi
-
-# Step 4: Create IAM service account
-echo -e "${YELLOW}Step 4: Creating IAM service account...${NC}"
-if eksctl create iamserviceaccount \
-  --namespace "$NAMESPACE" \
-  --region "$AWS_REGION" \
-  --cluster "$EKS_CLUSTER_NAME" \
-  --name "$SERVICE_ACCOUNT_NAME" \
-  --attach-policy-arn arn:aws:iam::"$AWS_ACCOUNT_ID:policy/$IAM_POLICY_NAME" \
-  --approve \
-  --override-existing-serviceaccounts; then
-  echo -e "${GREEN}IAM service account created successfully.\n${NC}"
-else
-  echo -e "${RED}Failed to create IAM service account.${NC}"
-  exit 0
-fi
-
-
-helm_command() {
-helm upgrade \
-  --namespace "$NAMESPACE" \
-  --install "$APP_NAME" \
-  --version "$CHART_VERSION" \
-  "$REPO_NAME"/"$CHART_NAME" \
-    --set awsRegion="$AWS_REGION" \
-    --set clusterAPIConfigMapsNamespace="$NAMESPACE" \
-    --set rbac.serviceAccount.create=false \
-    --set rbac.serviceAccount.name="$SERVICE_ACCOUNT_NAME" \
-    --set autoDiscovery.clusterName="$EKS_CLUSTER_NAME" \
-    --set fullnameOverride="$APP_NAME" \
-    --set image.tag="v$APP_VERSION"
-}
-
-check_controller_installation() {
-    local expected_chart_version="$1"
-    local expected_app_version="$2"
-
-    echo -e "${YELLOW}Checking if $CHART_NAME_STRING is installed...${NC}"
-
-    if helm list -n "$NAMESPACE" | grep -q '$CHART_NAME'; then
-        echo -e "${GREEN}$CHART_NAME_STRING is installed.${NC}"
-
-        # Get installed versions
-        local installed_versions=$(helm list -n "$NAMESPACE" -f "$CHART_NAME" -o json | jq -r '.[0] | "\(.chart),\(.app_version)"')
-        local installed_chart_version=$(echo "$installed_versions" | cut -d',' -f1 | awk -F- '{print $NF}')
-        local installed_app_version=$(echo "$installed_versions" | cut -d',' -f2)
-
-        echo -e "Installed Chart Version: ${BLUE}$installed_chart_version${NC}"
-        echo -e "Installed App Version: ${BLUE}$installed_app_version${NC}"
-
-        if [ "$installed_chart_version" = "$expected_chart_version" ] && [ "$installed_app_version" = "$expected_app_version" ]; then
-            echo -e "${GREEN}Installed versions match the expected versions... Skip the installation/upgrade\n${NC}"
-        else
-            echo -e "${RED}Installed versions do not match the expected versions.${NC}"
-            echo -e "Expected Chart Version: ${BLUE}$expected_chart_version${NC}"
-            echo -e "Expected App Version: ${BLUE}$expected_app_version${NC}\n"
-            # Step 7: Install or upgrade $CHART_NAME_STRING
-            echo -e "${YELLOW}\nStep 7: Installing/Upgrading $CHART_NAME_STRING...${NC}"
-            # select node with label: gpu-node: true
-            if helm_command; then
-              echo -e "${GREEN}$CHART_NAME_STRING installed/upgraded successfully.\n${NC}"
-            else
-              echo -e "${RED}Failed to install/upgrade $CHART_NAME_STRING.${NC}"
-              exit 0
+# Get cluster info from context if not provided
+get_cluster_info() {
+    if [[ -z "$CLUSTER_NAME" ]] || [[ -z "$REGION" ]]; then
+        local context
+        context=$(kubectl config current-context)
+        
+        if [[ -z "$CLUSTER_NAME" ]]; then
+            CLUSTER_NAME=$(echo "$context" | awk -F: '{split($NF,a,"/"); print a[2]}')
+        fi
+        
+        if [[ -z "$REGION" ]]; then
+            REGION=$(echo "$context" | awk -F: '{print $4}')
+        fi
     fi
+    
+    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+}
+
+# Add/update Helm repo
+setup_repo() {
+    log_step "Helm Repository"
+    helm repo add "$REPO_NAME" "$REPO_URL" > /dev/null 2>&1 || true
+    helm repo update "$REPO_NAME" > /dev/null 2>&1
+    log_success "Repository ready: $REPO_NAME"
+}
+
+# List available versions
+list_versions() {
+    setup_repo
+    log_step "Available Chart Versions"
+    echo -e "${GREEN}CHART VERSION   APP VERSION${NC}"
+    helm search repo "${REPO_NAME}/${CHART_NAME}" --versions --output json | \
+        jq -r '.[] | "\(.version)\t\(.app_version)"' | head -n 15
+}
+
+# Get latest versions
+get_latest_versions() {
+    local versions
+    versions=$(helm search repo "${REPO_NAME}/${CHART_NAME}" --versions --output json)
+    CHART_VERSION=$(echo "$versions" | jq -r '.[0].version')
+    APP_VERSION=$(echo "$versions" | jq -r '.[0].app_version')
+}
+
+# Uninstall
+uninstall() {
+    log_step "Uninstalling Cluster Autoscaler"
+    
+    if helm list -n "$NAMESPACE" | grep -q "$APP_NAME"; then
+        if $DRY_RUN; then
+            log_info "[DRY RUN] Would uninstall $APP_NAME from $NAMESPACE"
+        else
+            helm uninstall "$APP_NAME" -n "$NAMESPACE"
+            log_success "Uninstalled $APP_NAME"
         fi
     else
-        echo -e "${YELLOW}$CHART_NAME_STRING is not installed. Proceeding with installation...${NC}"
-        # Step 7: Install or upgrade $CHART_NAME_STRING
-        echo -e "${YELLOW}\nStep 7: Installing/Upgrading $CHART_NAME_STRING...${NC}"
-        # select node with label: gpu-node: true
-        if helm_command; then
-          echo -e "${GREEN}$CHART_NAME_STRING installed/upgraded successfully.\n${NC}"
-        else
-          echo -e "${RED}Failed to install/upgrade $CHART_NAME_STRING.${NC}"
-          exit 0
-        fi
+        log_warn "$APP_NAME not found in $NAMESPACE"
     fi
+    exit 0
 }
 
-# Step 6: Check if $CHART_NAME_STRING is installed
-echo -e "${YELLOW}\nStep 6: Checking $CHART_NAME_STRING installation...${NC}"
-check_controller_installation "$CHART_VERSION" "$APP_VERSION"
+# Main installation
+main() {
+    # Handle uninstall
+    if $UNINSTALL; then
+        setup_repo
+        uninstall
+    fi
 
-# Step 8: List $CHART_NAME_STRING
-echo -e "${YELLOW}\nStep 8: Listing $APP_NAME_STRING...${NC}"
-if helm list --all-namespaces --filter "$APP_NAME"; then
-  echo -e "${GREEN}$APP_NAME_STRING listed successfully.\n${NC}"
-else
-  echo -e "${RED}Failed to list $APP_NAME_STRING.${NC}"
-  exit 0
-fi
+    # List versions mode
+    if $LIST_VERSIONS; then
+        list_versions
+        exit 0
+    fi
+
+    # Get cluster info
+    get_cluster_info
+    
+    log_step "Environment"
+    log_info "Cluster: $CLUSTER_NAME"
+    log_info "Region: $REGION"
+    log_info "Account: $AWS_ACCOUNT_ID"
+
+    # Setup repo
+    setup_repo
+
+    # Get versions
+    if [[ -z "$CHART_VERSION" ]]; then
+        get_latest_versions
+        log_info "Using latest: chart=$CHART_VERSION app=$APP_VERSION"
+    else
+        [[ -z "$APP_VERSION" ]] && APP_VERSION="$CHART_VERSION"
+        log_info "Using specified: chart=$CHART_VERSION app=$APP_VERSION"
+    fi
+
+    if $DRY_RUN; then
+        log_step "Dry Run Summary"
+        log_info "Would install Cluster Autoscaler"
+        log_info "  Chart Version: $CHART_VERSION"
+        log_info "  App Version: $APP_VERSION"
+        log_info "  Cluster: $CLUSTER_NAME"
+        log_info "  Namespace: $NAMESPACE"
+        exit 0
+    fi
+
+    # IAM setup
+    if ! $SKIP_IAM; then
+        log_step "IAM Policy"
+        local policy_arn="arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${IAM_POLICY_NAME}"
+        
+        if aws iam get-policy --policy-arn "$policy_arn" > /dev/null 2>&1; then
+            log_success "IAM policy exists"
+            # Update policy if file exists
+            if [[ -f "${SCRIPT_DIR}/policy.json" ]]; then
+                aws iam create-policy-version \
+                    --policy-arn "$policy_arn" \
+                    --policy-document "file://${SCRIPT_DIR}/policy.json" \
+                    --set-as-default > /dev/null 2>&1 || log_warn "Could not update policy"
+            fi
+        else
+            if [[ -f "${SCRIPT_DIR}/policy.json" ]]; then
+                aws iam create-policy \
+                    --policy-name "$IAM_POLICY_NAME" \
+                    --policy-document "file://${SCRIPT_DIR}/policy.json" > /dev/null
+                log_success "IAM policy created"
+            else
+                log_warn "policy.json not found, skipping IAM policy creation"
+            fi
+        fi
+
+        log_step "Service Account"
+        eksctl create iamserviceaccount \
+            --namespace "$NAMESPACE" \
+            --region "$REGION" \
+            --cluster "$CLUSTER_NAME" \
+            --name "$SERVICE_ACCOUNT_NAME" \
+            --attach-policy-arn "$policy_arn" \
+            --approve \
+            --override-existing-serviceaccounts
+        log_success "Service account configured"
+    fi
+
+    # Install/Upgrade
+    log_step "Installing Cluster Autoscaler"
+    
+    helm upgrade --install "$APP_NAME" \
+        "${REPO_NAME}/${CHART_NAME}" \
+        --namespace "$NAMESPACE" \
+        --version "$CHART_VERSION" \
+        --set awsRegion="$REGION" \
+        --set rbac.serviceAccount.create=false \
+        --set rbac.serviceAccount.name="$SERVICE_ACCOUNT_NAME" \
+        --set autoDiscovery.clusterName="$CLUSTER_NAME" \
+        --set fullnameOverride="$APP_NAME" \
+        --set "image.tag=v${APP_VERSION}"
+
+    log_success "Cluster Autoscaler installed"
+    
+    log_step "Verification"
+    helm list -n "$NAMESPACE" -f "$APP_NAME"
+    
+    log_info "Installation complete!"
+    log_info "Check pods: kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=aws-cluster-autoscaler"
+    exit 0
+}
+
+main "$@"
