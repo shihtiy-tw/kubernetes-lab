@@ -1,143 +1,115 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Cross-VPC NLB Scenario
+# CLI 12-Factor Compliant
 
-# Exit on error
-set -e
+set -euo pipefail
 
-# Get Terraform outputs
-echo "Loading configuration from Terraform outputs..."
+SCRIPT_VERSION="2.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Change to the VPC peering directory and get outputs
-cd ../../../resources/usecases/cross-vpc-loadbalancing/vpc-peering
-VPC1_ID=$(terraform output -raw vpc1_id)
-VPC2_ID=$(terraform output -raw vpc2_id)
-EKS_SG_ID=$(terraform output -raw eks_security_group_id)
-NLB_SG_ID=$(terraform output -raw nlb_security_group_id)
-CLUSTER_NAME=$(terraform output -raw cluster_name)
-REGION=$(terraform output -raw region)
+# Colors
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
 
-# Change to the EKS/NLB directory and get outputs
-cd ../eks-nlb
-TARGET_GROUP_ARN=$(terraform output -raw target_group_arn)
-NLB_ARN=$(terraform output -raw nlb_arn)
-NLB_DNS=$(terraform output -raw nlb_dns)
-CLUSTER_ENDPOINT=$(terraform output -raw cluster_endpoint)
-CLUSTER_CA=$(terraform output -raw cluster_ca_certificate)
+show_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
 
-# Return to the original directory
-cd ../../../../scenario/load-balancers/cross-vpc-nlb
+Deploy NLB for cross-VPC communication.
 
-echo "Configuration loaded:"
-echo "VPC1_ID: $VPC1_ID"
-echo "VPC2_ID: $VPC2_ID"
-echo "CLUSTER_NAME: $CLUSTER_NAME"
-echo "TARGET_GROUP_ARN: $TARGET_GROUP_ARN"
-echo "NLB_DNS: $NLB_DNS"
+OPTIONS:
+    --apply               Apply the configuration (default)
+    --delete              Delete the configuration
+    --dry-run             Show what would be deployed
+    -h, --help            Show this help message
+    -v, --version         Show script version
 
+EXAMPLES:
+    # Deploy
+    $(basename "$0")
 
-aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION"
+    # Dry run
+    $(basename "$0") --dry-run
 
-# Create namespace
-echo "Creating namespace..."
-kubectl apply -f k8s-namespace.yaml
+    # Delete
+    $(basename "$0") --delete
+EOF
+}
 
-# Create IAM policy for AWS Load Balancer Controller
-echo "Creating IAM policy for AWS Load Balancer Controller..."
-POLICY_NAME="AWSLoadBalancerControllerIAMPolicy"
-POLICY_ARN=""
+show_version() {
+    echo "$(basename "$0") version ${SCRIPT_VERSION}"
+}
 
-# Check if policy already exists
-POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='$POLICY_NAME'].Arn" --output text)
+# Logging
+log_info() { echo -e "${BLUE}[INFO]${NC} $*" >&1; }
+log_success() { echo -e "${GREEN}[OK]${NC} $*" >&1; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_step() { echo -e "\n${YELLOW}=== $* ===${NC}" >&1; }
 
-if [ "$POLICY_ARN" = "" ]; then
-  echo "Creating new IAM policy..."
-  # Download policy document
-  curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+# Defaults
+ACTION="apply"
+DRY_RUN=false
 
-  # Create policy
-  POLICY_ARN=$(aws iam create-policy \
-    --policy-name "$POLICY_NAME" \
-    --policy-document file://iam-policy.json \
-    --query 'Policy.Arn' \
-    --output text)
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --apply)
+            ACTION="apply"
+            shift
+            ;;
+        --delete)
+            ACTION="delete"
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--version)
+            show_version
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            echo "Run '$(basename "$0") --help' for usage." >&2
+            exit 1
+            ;;
+    esac
+done
 
-  # Clean up
-  rm iam-policy.json
-else
-  echo "Using existing IAM policy: $POLICY_ARN"
-fi
+# Main
+main() {
+    cd "$SCRIPT_DIR"
 
-eksctl utils associate-iam-oidc-provider --region="$REGION" --cluster="$CLUSTER_NAME" --approve
+    log_step "Action: $ACTION"
 
-# Create IAM role for service account
-echo "Creating IAM role for service account..."
-eksctl create iamserviceaccount \
-  --cluster="$CLUSTER_NAME" \
-  --namespace=kube-system \
-  --name=aws-load-balancer-controller \
-  --attach-policy-arn="$POLICY_ARN" \
-  --override-existing-serviceaccounts \
-  --region "$REGION" \
-  --approve
+    if $DRY_RUN; then
+        log_step "Dry Run Summary"
+        log_info "Would $ACTION Kustomize configuration"
+        exit 0
+    fi
 
-# Get the role ARN
-ROLE_ARN=$(aws iam list-roles --query "Roles[?contains(RoleName, 'aws-load-balancer-controller')].Arn" --output text)
+    if [[ "$ACTION" == "delete" ]]; then
+        log_step "Deleting Resources"
+        kustomize build . | kubectl delete -f - 2>/dev/null || true
+        log_success "Resources deleted"
+    else
+        log_step "Applying Resources"
+        kustomize build . | kubectl apply -f -
+        log_success "Resources applied"
+    fi
 
-# Install AWS Load Balancer Controller with custom VPC configuration
-echo "Installing AWS Load Balancer Controller..."
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
+    log_step "Complete"
+    log_info "Check services: kubectl get svc"
+    exit 0
+}
 
-# Replace placeholders in values file
-sed -e "s|CLUSTER_NAME|$CLUSTER_NAME|g" \
-    -e "s|REGION|$REGION|g" \
-    -e "s|VPC2_ID|$VPC2_ID|g" \
-    -e "s|ROLE_ARN|$ROLE_ARN|g" \
-    k8s-aws-load-balancer-controller-values.yaml > values-temp.yaml
-
-# Install controller
-helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  -f values-temp.yaml
-
-# Clean up
-rm values-temp.yaml
-
-# Wait for controller to be ready
-echo "Waiting for AWS Load Balancer Controller to be ready..."
-kubectl wait --namespace kube-system \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/name=aws-load-balancer-controller \
-  --timeout=90s
-
-# Deploy sample application
-echo "Deploying sample application..."
-kubectl apply -f k8s-deployment-sample-app.yaml
-kubectl apply -f k8s-service.yaml
-
-# Wait for deployment to be ready
-echo "Waiting for sample application to be ready..."
-kubectl wait --namespace cross-vpc-demo \
-  --for=condition=available deployment/sample-app \
-  --timeout=90s
-
-# Apply TargetGroupBinding
-echo "Creating TargetGroupBinding..."
-sed -e "s|TARGET_GROUP_ARN|$TARGET_GROUP_ARN|g" \
-    -e "s|SECURITY_GROUP_ID|$NLB_SG_ID|g" \
-    k8s-targetgroupbinding.yaml > tgb-temp.yaml
-
-kubectl apply -f tgb-temp.yaml
-
-# Clean up
-rm tgb-temp.yaml
-
-echo "Cross-VPC NLB setup complete!"
-echo "NLB DNS Name: $NLB_DNS"
-echo ""
-echo "You can access the application at: http://$NLB_DNS"
-echo ""
-echo "To verify the TargetGroupBinding:"
-echo "kubectl get targetgroupbinding -n cross-vpc-demo"
-echo ""
-echo "To check if targets are registered with the NLB:"
-echo "aws elbv2 describe-target-health --target-group-arn $TARGET_GROUP_ARN"
+main "$@"

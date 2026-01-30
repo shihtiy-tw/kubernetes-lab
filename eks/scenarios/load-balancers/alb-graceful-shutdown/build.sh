@@ -1,10 +1,135 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ALB Graceful Shutdown Scenario
+# CLI 12-Factor Compliant
 
-SERVICE_NAME=$(yq -r ".metadata.name" k8s-service.yaml)
-NAME_PREFIX=$(yq -r ".namePrefix" kustomization.yaml)
+set -euo pipefail
 
-kustomize build . \
-  | sed -e "/annotations:/,/spec:/s/${SERVICE_NAME}/${NAME_PREFIX}${SERVICE_NAME}/g" \
-  | kubectl apply -f -
+SCRIPT_VERSION="2.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# /annotations:/,/spec:/: This is the range pattern that tells sed to perform the substitution only between the "annotations:" and "spec:" lines.
+# Colors
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+show_help() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Deploy ALB configuration with graceful shutdown support.
+
+OPTIONS:
+    --apply               Apply the configuration (default)
+    --delete              Delete the configuration
+    --dry-run             Show what would be deployed
+    -h, --help            Show this help message
+    -v, --version         Show script version
+
+EXAMPLES:
+    # Deploy
+    $(basename "$0")
+
+    # Dry run
+    $(basename "$0") --dry-run
+
+    # Delete
+    $(basename "$0") --delete
+EOF
+}
+
+show_version() {
+    echo "$(basename "$0") version ${SCRIPT_VERSION}"
+}
+
+# Logging
+log_info() { echo -e "${BLUE}[INFO]${NC} $*" >&1; }
+log_success() { echo -e "${GREEN}[OK]${NC} $*" >&1; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_step() { echo -e "\n${YELLOW}=== $* ===${NC}" >&1; }
+
+# Defaults
+ACTION="apply"
+DRY_RUN=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --apply)
+            ACTION="apply"
+            shift
+            ;;
+        --delete)
+            ACTION="delete"
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--version)
+            show_version
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            echo "Run '$(basename "$0") --help' for usage." >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Main
+main() {
+    cd "$SCRIPT_DIR"
+
+    # Get configuration
+    local service_name=""
+    local name_prefix=""
+    
+    if [[ -f "k8s-service.yaml" ]]; then
+        service_name=$(yq -r ".metadata.name" k8s-service.yaml 2>/dev/null || echo "")
+    fi
+    
+    if [[ -f "kustomization.yaml" ]]; then
+        name_prefix=$(yq -r ".namePrefix // \"\"" kustomization.yaml 2>/dev/null || echo "")
+    fi
+
+    log_step "Configuration"
+    log_info "Service Name: $service_name"
+    log_info "Name Prefix: $name_prefix"
+    log_info "Action: $ACTION"
+
+    if $DRY_RUN; then
+        log_step "Dry Run Summary"
+        log_info "Would $ACTION Kustomize configuration"
+        log_info "Final service name: ${name_prefix}${service_name}"
+        exit 0
+    fi
+
+    if [[ "$ACTION" == "delete" ]]; then
+        log_step "Deleting Resources"
+        kustomize build . \
+            | sed -e "/annotations:/,/spec:/s/${service_name}/${name_prefix}${service_name}/g" \
+            | kubectl delete -f - 2>/dev/null || true
+        log_success "Resources deleted"
+    else
+        log_step "Applying Resources"
+        kustomize build . \
+            | sed -e "/annotations:/,/spec:/s/${service_name}/${name_prefix}${service_name}/g" \
+            | kubectl apply -f -
+        log_success "Resources applied"
+    fi
+
+    log_step "Complete"
+    log_info "Check ingress: kubectl get ingress"
+    exit 0
+}
+
+main "$@"
