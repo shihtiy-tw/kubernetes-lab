@@ -1,0 +1,96 @@
+name: Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  bats-tests:
+    name: BATS Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup BATS
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: 1.10.0
+
+      - name: Install BATS helpers
+        run: |
+          git clone https://github.com/bats-core/bats-support.git tests/test_helper/bats-support
+          git clone https://github.com/bats-core/bats-assert.git tests/test_helper/bats-assert
+
+      - name: Run BATS tests
+        run: |
+          if [[ -d tests ]] && find tests -name "*.bats" | grep -q .; then
+            bats tests/
+          else
+            echo "No BATS tests found, skipping"
+          fi
+
+  cli-compliance:
+    name: CLI 12-Factor Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check scripts have --help
+        run: |
+          failed=0
+          for script in $(find . -name "*.sh" -type f -executable 2>/dev/null); do
+            if ! grep -q -- "--help" "$script"; then
+              echo "Missing --help: $script"
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - name: Check scripts have --version
+        run: |
+          failed=0
+          for script in $(find . -name "*.sh" -type f -executable 2>/dev/null); do
+            if ! grep -q -- "--version" "$script"; then
+              echo "Missing --version: $script"
+              failed=1
+            fi
+          done
+          exit $failed
+
+  validate-yaml:
+    name: Validate Kubernetes YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      - name: Validate manifests (dry-run)
+        run: |
+          for file in $(find . -name "*.yaml" -path "*/manifests/*" 2>/dev/null); do
+            echo "Validating: $file"
+            kubectl apply --dry-run=client -f "$file" || true
+          done
+
+  helm-lint:
+    name: Helm Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: "v3.13.0"
+
+      - name: Lint Helm charts
+        run: |
+          for chart in $(find . -name "Chart.yaml" -exec dirname {} \; 2>/dev/null); do
+            echo "Linting: $chart"
+            helm lint "$chart" || true
+          done

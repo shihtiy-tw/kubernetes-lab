@@ -1,0 +1,198 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // ==========================================================================
+        // Linting Tasks
+        // ==========================================================================
+        {
+            "label": "Lint: All",
+            "type": "shell",
+            "command": "make lint",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Lint: ShellCheck",
+            "type": "shell",
+            "command": "find . -name '*.sh' -type f -exec shellcheck {} +",
+            "problemMatcher": "$shellcheck",
+            "group": "build"
+        },
+        {
+            "label": "Lint: YAML",
+            "type": "shell",
+            "command": "yamllint -c .yamllint .",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Lint: Markdown",
+            "type": "shell",
+            "command": "markdownlint --config .markdownlint.json '**/*.md'",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        // ==========================================================================
+        // Pre-commit Tasks
+        // ==========================================================================
+        {
+            "label": "Pre-commit: Run All",
+            "type": "shell",
+            "command": "pre-commit run --all-files",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Pre-commit: Install",
+            "type": "shell",
+            "command": "pre-commit install && pre-commit install --hook-type commit-msg",
+            "problemMatcher": []
+        },
+        // ==========================================================================
+        // Testing Tasks
+        // ==========================================================================
+        {
+            "label": "Test: All",
+            "type": "shell",
+            "command": "make test",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Test: CLI Compliance",
+            "type": "shell",
+            "command": "./tests/test-cli-12factor.sh",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Test: Current File (BATS)",
+            "type": "shell",
+            "command": "bats ${file}",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        // ==========================================================================
+        // Kind Cluster Tasks
+        // ==========================================================================
+        {
+            "label": "Kind: Create Cluster",
+            "type": "shell",
+            "command": "./kind/create-cluster.sh --name dev-cluster",
+            "problemMatcher": []
+        },
+        {
+            "label": "Kind: Delete Cluster",
+            "type": "shell",
+            "command": "./kind/delete-cluster.sh --name dev-cluster",
+            "problemMatcher": []
+        },
+        {
+            "label": "Kind: List Clusters",
+            "type": "shell",
+            "command": "kind get clusters",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        // ==========================================================================
+        // Kubectl Tasks
+        // ==========================================================================
+        {
+            "label": "Kubectl: Get All",
+            "type": "shell",
+            "command": "kubectl get all -A",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "Kubectl: Get Nodes",
+            "type": "shell",
+            "command": "kubectl get nodes -o wide",
+            "problemMatcher": []
+        },
+        {
+            "label": "Kubectl: Get Pods (All Namespaces)",
+            "type": "shell",
+            "command": "kubectl get pods -A",
+            "problemMatcher": []
+        },
+        {
+            "label": "Kubectl: Debug - Events",
+            "type": "shell",
+            "command": "kubectl get events --sort-by='.lastTimestamp' -A | tail -20",
+            "problemMatcher": []
+        },
+        // ==========================================================================
+        // Addon Tasks
+        // ==========================================================================
+        {
+            "label": "Addon: Install (select)",
+            "type": "shell",
+            "command": "${workspaceFolder}/eks/addons/${input:addonName}/install.sh --help",
+            "problemMatcher": []
+        },
+        {
+            "label": "Addon: Dry Run (select)",
+            "type": "shell",
+            "command": "${workspaceFolder}/eks/addons/${input:addonName}/install.sh --dry-run",
+            "problemMatcher": []
+        },
+        // ==========================================================================
+        // Documentation Tasks
+        // ==========================================================================
+        {
+            "label": "Docs: Preview README",
+            "type": "shell",
+            "command": "grip README.md",
+            "problemMatcher": [],
+            "isBackground": true
+        },
+        // ==========================================================================
+        // Utility Tasks  
+        // ==========================================================================
+        {
+            "label": "Setup: Dev Environment",
+            "type": "shell",
+            "command": "./scripts/setup-dev.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: Tool Versions",
+            "type": "shell",
+            "command": "./scripts/check-versions.sh",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "addonName",
+            "type": "pickString",
+            "description": "Select addon",
+            "options": [
+                "ingress-nginx",
+                "cert-manager",
+                "external-dns",
+                "karpenter",
+                "cluster-autoscaler",
+                "metrics-server",
+                "aws-load-balancer-controller",
+                "external-secrets",
+                "argocd",
+                "crossplane",
+                "keda",
+                "prometheus-stack",
+                "grafana"
+            ],
+            "default": "ingress-nginx"
+        }
+    ]
+}

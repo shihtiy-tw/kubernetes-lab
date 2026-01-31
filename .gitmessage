@@ -1,0 +1,47 @@
+# Git Commit Template
+# Follow Conventional Commits: https://www.conventionalcommits.org/
+
+# <type>(<scope>): <subject>
+# |       |          |
+# |       |          +-> Summary in imperative mood, no period at end
+# |       |
+# |       +-> Component affected: addons, scenarios, kind, eks, docs, etc.
+# |
+# +-> Type: feat, fix, docs, style, refactor, test, chore, ci, perf
+
+# --- COMMIT MESSAGE STARTS BELOW THIS LINE ---
+
+
+# --- BODY (optional) ---
+# Explain WHAT and WHY, not HOW
+# Wrap at 72 characters
+
+
+# --- FOOTER (optional) ---
+# Reference issues: Closes #123, Fixes #456
+# Breaking changes: BREAKING CHANGE: description
+# Co-authors: Co-authored-by: Name <email>
+
+
+# --- TYPES ---
+# feat:     New feature (minor version bump)
+# fix:      Bug fix (patch version bump)
+# docs:     Documentation only changes
+# style:    Formatting, missing semi colons, etc; no code change
+# refactor: Code change that neither fixes a bug nor adds a feature
+# perf:     Performance improvement
+# test:     Adding missing tests or correcting existing tests
+# chore:    Updating build tasks, package manager configs, etc
+# ci:       CI/CD pipeline changes
+# build:    Build system or external dependency changes
+# revert:   Reverts a previous commit
+
+# --- SCOPES ---
+# addons, scenarios, kind, eks, gke, aks, shared, tests, docs, ci, deps, config
+
+# --- EXAMPLES ---
+# feat(addons): add karpenter support
+# fix(eks): correct security group rules
+# docs(readme): update installation instructions
+# refactor(scenarios): apply CLI 12-factor compliance
+# test(addons): add bats tests for ingress-nginx

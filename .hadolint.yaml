@@ -1,0 +1,51 @@
+# Hadolint Configuration for kubernetes-lab
+# https://github.com/hadolint/hadolint
+
+---
+failure-threshold: warning
+
+# Ignored rules (with rationale)
+ignored:
+  # DL3008: Pin versions in apt-get install
+  # Rationale: We use latest for lab/demo purposes but document in comments
+  - DL3008
+
+  # DL3013: Pin versions in pip
+  # Rationale: Same as above for lab environments
+  - DL3013
+
+  # DL4006: Set SHELL option -o pipefail
+  # Rationale: Sometimes not applicable in simple Dockerfiles
+  # - DL4006
+
+# Strict mode for critical rules
+override:
+  error:
+    # Always error on these security issues
+    - DL3000 # Use absolute WORKDIR
+    - DL3001 # Don't use apt-get dist-upgrade
+    - DL3002 # Last USER should not be root
+    - DL3003 # Use WORKDIR to switch directories
+    - DL3004 # Don't use sudo
+
+  warning:
+    # Warn but don't fail
+    - DL3015 # Avoid additional packages in apt-get install
+
+  info:
+    # Informational only
+    - DL3020 # Use COPY instead of ADD
+
+# Label schema recommendations
+label-schema:
+  author: maintainer
+  version: org.opencontainers.image.version
+  source-url: org.opencontainers.image.source
+
+# Registry settings for trusted base images
+trustedRegistries:
+  - docker.io
+  - gcr.io
+  - public.ecr.aws
+  - quay.io
+  - ghcr.io

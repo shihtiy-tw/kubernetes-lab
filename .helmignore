@@ -1,0 +1,72 @@
+# Helm ignore patterns for kubernetes-lab
+# Common patterns to ignore when packaging Helm charts
+
+# VCS
+.git/
+.gitignore
+.gitattributes
+.bzr/
+.bzrignore
+.hg/
+.hgignore
+.svn/
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build and test artifacts
+*.orig
+*.bak
+.project
+.settings/
+*.tmproj
+.tm_properties
+
+# Helm specific
+*.tgz
+charts/*.tgz
+
+# Testing
+tests/
+*_test.yaml
+NOTES.txt.bak
+
+# Documentation (include README for chart)
+docs/
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+.circleci/
+.travis.yml
+
+# Development files
+.editorconfig
+.shellcheckrc
+.yamllint
+.hadolint.yaml
+.pre-commit-config.yaml
+Makefile
+Taskfile.yml
+
+# Secrets and sensitive
+*.pem
+*.key
+.env
+secrets.yaml
+*-secret.yaml
+
+# Terraform (not needed in Helm charts)
+*.tf
+*.tfvars
+.terraform/

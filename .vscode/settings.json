@@ -1,0 +1,160 @@
+{
+    // ==========================================================================
+    // File Associations
+    // ==========================================================================
+    "files.associations": {
+        "*.yaml": "yaml",
+        "*.yml": "yaml",
+        "Makefile": "makefile",
+        "Makefile.*": "makefile",
+        "*.sh": "shellscript",
+        "*.bash": "shellscript",
+        "*.tpl": "helm",
+        "values*.yaml": "helm",
+        "Chart.yaml": "yaml",
+        ".helmignore": "ignore",
+        ".dockerignore": "ignore",
+        ".shellcheckrc": "shellscript",
+        "Dockerfile*": "dockerfile"
+    },
+    // ==========================================================================
+    // Editor Settings
+    // ==========================================================================
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+        80,
+        120
+    ],
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.renderWhitespace": "boundary",
+    "editor.minimap.enabled": true,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": "active",
+    // ==========================================================================
+    // File Settings
+    // ==========================================================================
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.eol": "\n",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.terraform": true,
+        "**/node_modules": true,
+        "**/__pycache__": true
+    },
+    // ==========================================================================
+    // YAML Settings
+    // ==========================================================================
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.tabSize": 2,
+        "editor.autoIndent": "full"
+    },
+    "yaml.schemas": {
+        "kubernetes": [
+            "**/k8s/**/*.yaml",
+            "**/manifests/**/*.yaml"
+        ],
+        "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+    },
+    "yaml.customTags": [
+        "!reference sequence"
+    ],
+    // ==========================================================================
+    // Shell Script Settings
+    // ==========================================================================
+    "[shellscript]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format",
+        "editor.tabSize": 2
+    },
+    "shellformat.effectLanguages": [
+        "shellscript",
+        "bash"
+    ],
+    "shellformat.flag": "-i 2 -ci -bn -sr",
+    "shellcheck.enable": true,
+    "shellcheck.run": "onSave",
+    "shellcheck.executablePath": "",
+    "shellcheck.customArgs": [],
+    // ==========================================================================
+    // Markdown Settings
+    // ==========================================================================
+    "[markdown]": {
+        "editor.wordWrap": "on",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": true,
+            "strings": true
+        },
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+    },
+    // ==========================================================================
+    // Kubernetes Settings
+    // ==========================================================================
+    "vs-kubernetes": {
+        "vs-kubernetes.helm-path": "helm",
+        "vs-kubernetes.kubectl-path": "kubectl",
+        "vs-kubernetes.outputFormat": "yaml"
+    },
+    // ==========================================================================
+    // Docker Settings
+    // ==========================================================================
+    "[dockerfile]": {
+        "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+    },
+    // ==========================================================================
+    // Terraform Settings (for EKS provisioning)
+    // ==========================================================================
+    "[terraform]": {
+        "editor.defaultFormatter": "hashicorp.terraform",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2
+    },
+    "terraform.languageServer.enabled": true,
+    // ==========================================================================
+    // Git Settings
+    // ==========================================================================
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    // ==========================================================================
+    // Search Settings
+    // ==========================================================================
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.terraform": true,
+        "**/vendor": true,
+        "**/coverage": true
+    },
+    // ==========================================================================
+    // Task Settings
+    // ==========================================================================
+    "task.autoDetect": "on",
+    // ==========================================================================
+    // Terminal Settings
+    // ==========================================================================
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.env.linux": {
+        "KUBECONFIG": "${workspaceFolder}/kubeconfig"
+    },
+    // ==========================================================================
+    // TODO Highlighting
+    // ==========================================================================
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "BUG",
+        "HACK",
+        "XXX",
+        "NOTE",
+        "REVIEW"
+    ],
+    "todo-tree.highlights.defaultHighlight": {
+        "type": "text",
+        "foreground": "#fff",
+        "gutterIcon": true
+    }
+}

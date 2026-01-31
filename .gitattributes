@@ -1,0 +1,73 @@
+# Git Attributes for kubernetes-lab
+# https://git-scm.com/docs/gitattributes
+
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Shell scripts - always LF
+*.sh text eol=lf
+*.bash text eol=lf
+
+# YAML files
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# JSON files
+*.json text eol=lf
+
+# Markdown documentation
+*.md text eol=lf diff=markdown
+
+# Makefiles
+Makefile text eol=lf
+*.mk text eol=lf
+
+# Docker
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+
+# Helm
+*.tpl text eol=lf
+
+# Go files
+*.go text eol=lf diff=golang
+
+# Terraform
+*.tf text eol=lf diff=terraform
+*.tfvars text eol=lf
+
+# Configuration files
+.editorconfig text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.shellcheckrc text eol=lf
+.yamllint text eol=lf
+.hadolint.yaml text eol=lf
+.pre-commit-config.yaml text eol=lf
+
+# Binary files - do not process
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.gz binary
+*.tar binary
+*.zip binary
+*.7z binary
+*.pdf binary
+
+# Lock files - exact format preservation
+package-lock.json -diff
+yarn.lock -diff
+go.sum -diff
+
+# Linguist overrides for GitHub
+*.sh linguist-language=Bash
+*.yaml linguist-language=YAML
+*.yml linguist-language=YAML
+
+# Exclude from language statistics
+docs/** linguist-documentation
+examples/** linguist-documentation
+tests/fixtures/** linguist-vendored

@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Debug Current Script",
+            "program": "${file}",
+            "args": [
+                "--help"
+            ],
+            "cwd": "${workspaceFolder}",
+            "terminalKind": "integrated"
+        },
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Debug Script with Dry Run",
+            "program": "${file}",
+            "args": [
+                "--dry-run"
+            ],
+            "cwd": "${workspaceFolder}",
+            "terminalKind": "integrated"
+        },
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Debug BATS Test",
+            "program": "/usr/bin/bats",
+            "args": [
+                "${file}"
+            ],
+            "cwd": "${workspaceFolder}",
+            "terminalKind": "integrated"
+        }
+    ]
+}

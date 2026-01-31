@@ -1,0 +1,96 @@
+# Docker ignore for kubernetes-lab
+# Reduces build context and speeds up builds
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation (not needed in containers)
+*.md
+!README.md
+docs/
+LICENSE
+
+# Test files
+tests/
+*_test.sh
+*.bats
+
+# Development files
+.editorconfig
+.shellcheckrc
+.yamllint
+.hadolint.yaml
+.markdownlint.json
+.pre-commit-config.yaml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+
+# Makefile and build tools
+Makefile
+Taskfile.yml
+justfile
+
+# Terraform state (security)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Environment files (security)
+.env
+.env.*
+*.env
+!*.env.example
+
+# Secrets
+*.pem
+*.key
+*.crt
+id_rsa*
+*.gpg
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Helm packages
+*.tgz
+charts/*.tgz
+
+# Node modules (if any)
+node_modules/
+
+# Python virtualenvs
+venv/
+.venv/
+__pycache__/
+
+# Go builds
+vendor/
+
+# Kubernetes secrets and sensitive configs
+*-secret.yaml
+*-secrets.yaml
+kubeconfig*

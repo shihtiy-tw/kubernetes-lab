@@ -1,0 +1,119 @@
+# Pre-commit Configuration for kubernetes-lab
+# https://pre-commit.com/
+#
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+---
+default_stages: [commit]
+fail_fast: false
+
+repos:
+  # Pre-commit hooks framework
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ["--allow-multiple-documents"]
+        exclude: "(templates/|charts/)"
+      - id: check-json
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ["--branch", "main", "--branch", "master"]
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: ["--severity=warning"]
+
+  # Shell script formatting
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.7.0-4
+    hooks:
+      - id: shfmt
+        args: ["-i", "2", "-ci", "-bn", "-sr"]
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: ["-c", ".yamllint", "--strict"]
+        exclude: "(templates/|charts/)"
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: ["--config", ".markdownlint.json"]
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+        args: ["--config", ".hadolint.yaml"]
+
+  # Terraform formatting (for EKS provisioning)
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.86.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+
+  # Helm linting
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.23
+    hooks:
+      - id: helmlint
+
+  # Security scanning
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: '(\.lock|\.sum|fixtures/)'
+
+  # Git commit message linting
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # Local hooks
+  - repo: local
+    hooks:
+      - id: validate-scripts-help
+        name: Validate scripts have --help
+        entry: bash -c 'for f in $(find . -name "*.sh" -type f -executable 2>/dev/null | head -5); do grep -q -- "--help" "$f" || (echo "Missing --help in $f" && exit 1); done'
+        language: system
+        pass_filenames: false
+        types: [shell]
+
+# CI configuration
+ci:
+  autofix_prs: true
+  autofix_commit_msg: "style: auto-fix by pre-commit.ci"
+  autoupdate_branch: "main"
+  autoupdate_schedule: weekly
