@@ -1,0 +1,44 @@
+# ingress-nginx Development Values
+# Use with: --values examples/helm-values/ingress-nginx/development.yaml
+
+controller:
+  # Single replica for development
+  replicaCount: 1
+
+  # Minimal resources
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # Metrics for development debugging
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+
+  # Service configuration (NodePort for Kind)
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30080
+      https: 30443
+
+  # Debug configuration
+  config:
+    enable-debug: "true"
+    error-log-level: "info"
+
+  # Host network for Kind ingress
+  hostPort:
+    enabled: true
+    ports:
+      http: 80
+      https: 443
+
+# No default backend for simpler setup
+defaultBackend:
+  enabled: false

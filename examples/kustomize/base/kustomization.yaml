@@ -1,0 +1,36 @@
+# Base Kustomization
+# Common resources for all environments
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kubernetes-lab-base
+
+# Namespace configuration
+namespace: default
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: kubernetes-lab
+
+# Common annotations
+commonAnnotations:
+  kubernetes-lab/version: "1.0.0"
+
+# Resources to include
+resources:
+  - namespace.yaml
+
+# ConfigMap generator (common config)
+configMapGenerator:
+  - name: app-config
+    literals:
+      - LOG_LEVEL=info
+      - ENVIRONMENT=base
+# Secret generator (for non-sensitive defaults)
+# secretGenerator:
+#   - name: app-secrets
+#     literals:
+#       - API_KEY=changeme

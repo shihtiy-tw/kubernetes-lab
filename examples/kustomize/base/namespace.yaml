@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubernetes-lab
+  labels:
+    app.kubernetes.io/name: kubernetes-lab
+    environment: base
+  annotations:
+    description: "Kubernetes Lab namespace"

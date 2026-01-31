@@ -1,0 +1,64 @@
+# cert-manager Production Values
+# Use with: --values examples/helm-values/cert-manager/production.yaml
+
+# High availability
+replicaCount: 2
+
+# Resource allocation
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Prometheus metrics
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+    namespace: monitoring
+    prometheusInstance: default
+
+# Webhook configuration
+webhook:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+
+# CA Injector
+cainjector:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+
+# Security context
+securityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+
+# Install CRDs via Helm
+installCRDs: true
+
+# Global settings
+global:
+  leaderElection:
+    namespace: cert-manager
+  logLevel: 2
+  priorityClassName: ""

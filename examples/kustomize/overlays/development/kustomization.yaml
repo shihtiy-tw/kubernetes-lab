@@ -1,0 +1,71 @@
+# Development Overlay
+# Applies development-specific patches to base
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kubernetes-lab-development
+
+# Namespace for development
+namespace: kubernetes-lab-dev
+
+# Include base resources
+resources:
+  - ../../base
+
+# Development-specific labels
+commonLabels:
+  environment: development
+  tier: development
+
+# Development annotations
+commonAnnotations:
+  kubernetes-lab/environment: development
+
+# Name suffix for development
+nameSuffix: -dev
+
+# ConfigMap overrides for development
+configMapGenerator:
+  - name: app-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - ENVIRONMENT=development
+      - ENABLE_DEBUG=true
+
+# Patches for development
+patches:
+  # Single replica for dev
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      labelSelector: "environment=development"
+
+  # Minimal resources for dev
+  - patch: |-
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: any
+      spec:
+        containers:
+          - name: '*'
+            resources:
+              limits:
+                cpu: 200m
+                memory: 256Mi
+              requests:
+                cpu: 50m
+                memory: 64Mi
+    target:
+      kind: Deployment
+
+# Single replica for all deployments
+replicas:
+  - name: any-deployment
+    count: 1
