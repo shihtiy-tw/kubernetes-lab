@@ -88,4 +88,30 @@ cd shared/plugins/ingress-nginx
 
 ## Commands
 
-See: `.opencode/commands/*.md` for lab management
+See: `.opencode/command/*.md` for full command documentation
+
+### Speckit (Spec-Driven Workflow)
+- `speckit.specify` - Create new specifications
+- `speckit.plan` - Create implementation plans
+- `speckit.tasks` - Generate task lists
+- `speckit.implement` - Execute implementation
+
+### Kubernetes Operations (Platform-Aware)
+```bash
+# Cluster lifecycle (--platform: kind|eks|gke|aks)
+k8s.cluster.create --platform kind --name dev-local
+k8s.cluster.delete --platform eks --name prod-cluster
+
+# Addon management
+k8s.addon.install --platform eks --addon ingress-nginx --cluster prod
+
+# Scenario deployment
+k8s.scenario.run --platform gke --scenario load-balancers --cluster staging
+
+# Testing and validation
+k8s.test.integration --platform kind --cluster dev-local
+k8s.manifest.validate --platform eks --path eks/scenarios/
+
+# Debugging
+k8s.logs --platform aks --cluster test --deployment nginx
+```
