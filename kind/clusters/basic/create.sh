@@ -16,6 +16,7 @@ Create a basic single-node kind cluster for testing.
 OPTIONS:
     --name NAME           Cluster name (default: kind-basic)
     --k8s-version VER     Kubernetes version (default: latest)
+    --cni CNI             CNI plugin: native, cilium, calico (default: native)
     --wait DURATION       Wait for control plane ready (default: 60s)
     --dry-run             Show what would be created
     -h, --help            Show this help message
@@ -56,6 +57,7 @@ log_warn() {
 # Default values
 CLUSTER_NAME="kind-basic"
 K8S_VERSION=""
+CNI_PLUGIN="native"
 WAIT_DURATION="60s"
 DRY_RUN=false
 
@@ -72,6 +74,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --wait)
             WAIT_DURATION="$2"
+            shift 2
+            ;;
+        --cni)
+            CNI_PLUGIN="$2"
+            if [[ ! "$CNI_PLUGIN" =~ ^(native|cilium|calico)$ ]]; then
+                log_error "Invalid CNI: $CNI_PLUGIN. Use: native, cilium, calico"
+                exit 1
+            fi
             shift 2
             ;;
         --dry-run)
@@ -123,6 +133,15 @@ EOF
         echo "    image: kindest/node:${K8S_VERSION}" >> "$config_file"
     fi
 
+    # Disable default CNI for non-native
+    if [[ "$CNI_PLUGIN" != "native" ]]; then
+        cat >> "$config_file" << EOF
+networking:
+  disableDefaultCNI: true
+  podSubnet: "10.244.0.0/16"
+EOF
+    fi
+
     echo "$config_file"
 }
 
@@ -153,6 +172,16 @@ main() {
     log_info "Creating cluster..."
     if kind create cluster --config "$config_file" --wait "$WAIT_DURATION"; then
         log_info "Cluster '${CLUSTER_NAME}' created successfully"
+        
+        # Install CNI if not native
+        if [[ "$CNI_PLUGIN" == "cilium" ]]; then
+            log_info "Installing Cilium CNI..."
+            cilium install --wait 2>/dev/null || helm install cilium cilium/cilium --namespace kube-system || log_warn "Cilium install skipped (install manually)"
+        elif [[ "$CNI_PLUGIN" == "calico" ]]; then
+            log_info "Installing Calico CNI..."
+            kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml 2>/dev/null || log_warn "Calico install skipped (install manually)"
+        fi
+        
         log_info "Context: kind-${CLUSTER_NAME}"
         log_info "Get nodes: kubectl get nodes --context kind-${CLUSTER_NAME}"
         exit 0

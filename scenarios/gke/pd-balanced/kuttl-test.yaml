@@ -1,0 +1,19 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: kubectl apply -f manifests/
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 120
+commands:
+  - command: kubectl wait --for=condition=Ready pod/app -n scenario-pd --timeout=120s
+  - command: kubectl get pvc data -n scenario-pd -o jsonpath='{.status.phase}' | grep Bound

@@ -1,0 +1,19 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: kubectl apply -f manifests/
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 180
+commands:
+  - command: kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 statefulset/web -n scenario-statefulset --timeout=180s
+  - command: kubectl get pvc -n scenario-statefulset

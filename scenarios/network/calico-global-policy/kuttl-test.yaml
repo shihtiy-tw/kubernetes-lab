@@ -1,0 +1,19 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: kubectl apply -f manifests/
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 60
+commands:
+  - command: kubectl wait --for=condition=Ready pod/restricted-pod -n scenario-calico-global --timeout=60s
+  - command: calicoctl get globalnetworkpolicy deny-all-egress 2>/dev/null || kubectl get globalnetworkpolicies.crd.projectcalico.org deny-all-egress

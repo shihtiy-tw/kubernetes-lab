@@ -20,6 +20,13 @@
 - [ ] Create multi-cluster federation example
 - [ ] Add GitOps with ArgoCD scenario
 - [ ] Implement OPA/Gatekeeper policy examples
+- [ ] **Cost Optimization Roadmap** (Spec 005)
+  - [ ] Karpenter consolidation policies
+  - [ ] Spot/Preemptible instance scenarios
+  - [ ] Resource quotas and limit ranges
+  - [ ] Vertical Pod Autoscaler (VPA)
+  - [ ] Cluster right-sizing recommendations
+  - [ ] Kubecost/OpenCost integration
 
 ---
 

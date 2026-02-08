@@ -1,0 +1,19 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: envsubst < manifests/wi.yaml | kubectl apply -f -
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 90
+commands:
+  - command: kubectl wait --for=condition=Ready pod/gcp-client -n scenario-workload-id --timeout=60s
+  - command: kubectl exec gcp-client -n scenario-workload-id -- gcloud auth list 2>&1 | grep -q 'ACTIVE'

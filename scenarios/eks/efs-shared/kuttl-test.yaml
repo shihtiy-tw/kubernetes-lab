@@ -1,0 +1,19 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: envsubst < manifests/efs.yaml | kubectl apply -f -
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 120
+commands:
+  - command: kubectl wait --for=condition=Available deployment/writer -n scenario-efs --timeout=120s
+  - command: kubectl get pvc shared-data -n scenario-efs -o jsonpath='{.status.phase}' | grep Bound

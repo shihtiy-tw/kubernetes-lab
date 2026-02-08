@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scenario-irsa
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s3-access
+  namespace: scenario-irsa
+  annotations:
+    eks.amazonaws.com/role-arn: ${IRSA_ROLE_ARN}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: s3-client
+  namespace: scenario-irsa
+spec:
+  serviceAccountName: s3-access
+  containers:
+    - name: aws-cli
+      image: amazon/aws-cli:2.15.0
+      command: ["sleep", "3600"]
+      env:
+        - name: AWS_REGION
+          value: us-east-1

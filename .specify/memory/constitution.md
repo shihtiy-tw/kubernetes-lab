@@ -94,4 +94,78 @@ test(eks): add KUTTL tests for load-balancer
 - Kind testing required before cloud deployment
 - Cost cleanup required for cloud resources
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-30 | **Last Amended**: 2026-01-30
+---
+
+## Platform Awareness
+
+All k8s commands support multi-platform operation via `--platform` flag.
+
+### Supported Platforms
+| Platform | Type | Use Case |
+|----------|------|----------|
+| `kind` | Local | Development, CI/CD testing |
+| `eks` | AWS | Production workloads |
+| `gke` | GCP | Production workloads |
+| `aks` | Azure | Production workloads |
+
+### Command Pattern
+```bash
+k8s.{operation}.sh --platform {kind|eks|gke|aks} [options]
+```
+
+### Progressive Testing Workflow
+1. Develop and test on `kind` (free, fast)
+2. Validate on cloud dev cluster
+3. Deploy to production cluster
+
+---
+
+## Cluster Naming Conventions
+
+| Environment | Pattern | Example |
+|-------------|---------|---------|
+| Local | `{user}-{purpose}` | `yst-dev` |
+| Dev | `{project}-dev-{region}` | `myapp-dev-usw2` |
+| Staging | `{project}-staging-{region}` | `myapp-staging-usw2` |
+| Prod | `{project}-prod-{region}` | `myapp-prod-usw2` |
+
+---
+
+## Addon Configuration Standards
+
+### Required Addons (All Clusters)
+- `metrics-server` - Resource metrics
+- `cert-manager` - TLS certificate management
+
+### Platform-Specific Addons
+| Addon | kind | EKS | GKE | AKS |
+|-------|------|-----|-----|-----|
+| Ingress | ingress-nginx | aws-load-balancer-controller | GCE ingress | Application Gateway |
+| Storage | local-path | EBS CSI | GCE PD CSI | Azure Disk CSI |
+| Autoscaling | N/A | Karpenter/CA | GKE Autopilot | AKS Autoscaler |
+
+---
+
+## Safety Rules for Cluster Operations
+
+### Never Do
+- ❌ Create production clusters without naming convention
+- ❌ Skip Kind testing before cloud deployment
+- ❌ Leave cloud clusters running without cost tags
+- ❌ Apply untested manifests to production
+
+### Always Do
+- ✅ Test on Kind first
+- ✅ Tag cloud resources with cost center
+- ✅ Clean up test clusters after use
+- ✅ Document cluster purpose in AGENTS.md
+
+### Require Confirmation For
+- 🔐 Production cluster operations
+- 🔐 Cluster deletion
+- 🔐 Addon upgrades in production
+- 🔐 Node group changes
+
+---
+
+**Version**: 1.1.0 | **Ratified**: 2026-01-30 | **Last Amended**: 2026-02-07

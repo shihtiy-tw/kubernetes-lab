@@ -1,0 +1,22 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+timeout: 120
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: kubectl apply -f manifests/
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 90
+commands:
+  - command: kubectl wait --for=condition=Available deployment/nginx -n scenario-deployment --timeout=90s
+  - command: |
+      READY=$(kubectl get deployment nginx -n scenario-deployment -o jsonpath='{.status.readyReplicas}')
+      [ "$READY" -eq 3 ]

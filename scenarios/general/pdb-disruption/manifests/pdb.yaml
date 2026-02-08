@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scenario-pdb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: scenario-pdb
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+  namespace: scenario-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web

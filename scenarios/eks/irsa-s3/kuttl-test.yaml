@@ -1,0 +1,21 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: envsubst < manifests/irsa.yaml | kubectl apply -f -
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 90
+commands:
+  - command: kubectl wait --for=condition=Ready pod/s3-client -n scenario-irsa --timeout=60s
+  - command: |
+      # Verify IRSA token is projected
+      kubectl exec s3-client -n scenario-irsa -- ls /var/run/secrets/eks.amazonaws.com/serviceaccount/token

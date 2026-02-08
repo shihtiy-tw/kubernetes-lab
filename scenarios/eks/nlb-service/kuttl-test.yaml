@@ -1,0 +1,25 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+  - .
+startKIND: false
+skipClusterDelete: true
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+index: 0
+commands:
+  - command: kubectl apply -f manifests/
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 180
+commands:
+  - command: kubectl wait --for=condition=Available deployment/web -n scenario-nlb --timeout=60s
+  - command: |
+      for i in $(seq 1 60); do
+        ADDR=$(kubectl get svc web -n scenario-nlb -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+        [ -n "$ADDR" ] && exit 0
+        sleep 3
+      done
+      exit 1
