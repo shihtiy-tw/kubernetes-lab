@@ -1,20 +1,3 @@
----
-append_modified_update: true
-category: effort
-type: project
-status: Cultivation
-priority: 02high
-domain: "[[Atlas/Index/Domains/202109072212_README_CSIE|CSIE]]"
-start: 2026-02-02
-due: 2026-03-02
-kind: horizon
-author: agent
-created: 2026-02-03T20:00:00
-dateModified: 2026-02-03T20:00:00
-modified:
-  - 2026-02-03T20:00:00
----
-
 # 🏗️ Project Spec: High-Speed Multi-Cloud K8s Lab Engine
 
 > [!bot] **InboxClaw Integrated Capture**
