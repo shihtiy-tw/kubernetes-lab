@@ -1,40 +1,27 @@
-# EKS Resources
+# EKS Clusters & Resources
 
 This directory contains configuration files and templates for EKS clusters, nodegroups, launch templates, and other resources. These files serve as reference implementations and starting points for creating and managing EKS infrastructure.
 
 ## Directory Structure
 
 ```
-resources/
-├── clusters/         # EKS cluster configurations
-├── config/           # Configuration files for EKS components
-├── custom-amis/      # Custom AMI definitions and configurations
+clusters/
 ├── launch-templates/ # EC2 launch templates for EKS nodes
-├── nodegroups/       # EKS nodegroup definitions
-├── scripts/          # Utility scripts for resource management
-└── versions/         # Version-specific configurations
+├── usecases/         # Specific implementation patterns
+├── versions/         # Version-specific configurations
+└── create.sh         # Cluster creation script
 ```
 
 ## Key Components
 
 ### Clusters
 
-The `clusters` directory contains example configurations for creating EKS clusters with different settings and features. These examples demonstrate:
+The cluster configuration files (e.g., `eksctl-cluster-minimal.yaml`) provide example settings for creating EKS clusters with different features. These examples demonstrate:
 
 - Cluster creation with eksctl
 - Custom networking configurations
 - Control plane logging options
 - Cluster add-on configurations
-
-### Nodegroups
-
-The `nodegroups` directory provides examples for different types of EKS nodegroups:
-
-- Managed nodegroups
-- Self-managed nodegroups
-- Spot instance nodegroups
-- GPU-enabled nodegroups
-- Windows nodegroups
 
 ### Launch Templates
 
@@ -45,40 +32,24 @@ The `launch-templates` directory contains EC2 launch template configurations for
 - Instance type selections
 - Storage configurations
 
-### Custom AMIs
+### Usecases
 
-The `custom-amis` directory provides examples for creating and using custom AMIs with EKS, including:
-
-- AMI customization scripts
-- Packer templates
-- Post-installation configurations
+The `usecases` directory provides specialized implementation patterns, such as cross-VPC load balancing.
 
 ## Usage
 
-### Listing Resources
+### Creating a Cluster
 
-To list all clusters and nodegroups:
+You can use the `create.sh` script to create a cluster:
 
 ```bash
-../scripts/list-cluster-nodegroup.sh
+./create.sh --name my-cluster --region us-west-2
 ```
 
-Or use the Makefile from the root directory:
+Or use `eksctl` directly with the provided configuration files:
 
 ```bash
-make list
-```
-
-### Creating Resources
-
-The configuration files in this directory can be used as references when creating your own EKS resources. For example:
-
-```bash
-# Create a cluster using eksctl
-eksctl create cluster -f clusters/example-cluster.yaml
-
-# Create a nodegroup
-eksctl create nodegroup -f nodegroups/example-nodegroup.yaml
+eksctl create cluster -f eksctl-cluster-minimal.yaml
 ```
 
 ## Best Practices
@@ -95,7 +66,7 @@ When working with EKS resources:
 
 Before creating EKS resources:
 
-1. Install required tools from the [toolkit directory](../../toolkit/)
+1. Install required tools as documented in the [root README](../../README.md)
 2. Configure AWS credentials with appropriate permissions
 3. Understand the AWS and Kubernetes resource model
 4. Plan your networking and security requirements

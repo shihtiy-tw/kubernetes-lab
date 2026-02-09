@@ -52,7 +52,7 @@ Before installing any integration:
 
 1. Ensure you have a running EKS cluster
 2. Configure kubectl to use the correct context
-3. Install required tools from the [toolkit directory](../../toolkit/)
+3. Install required tools as documented in the [root README](../../README.md)
 4. Ensure you have appropriate IAM permissions
 
 ## Troubleshooting

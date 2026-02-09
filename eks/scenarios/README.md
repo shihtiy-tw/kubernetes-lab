@@ -47,7 +47,7 @@ cd load-balancers/alb-https
 Before running any scenario:
 
 1. Ensure you have a running EKS cluster
-2. Install any required integrations from the [integrations directory](../integrations/)
+2. Install any required integrations from the [addons directory](../addons/)
 3. Configure kubectl to use the correct context
 4. Review the scenario documentation for specific requirements
 
