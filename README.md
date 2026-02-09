@@ -45,8 +45,6 @@ Use this prompt to task Antigravity with generating specific lab scenarios:
 ## 📅 Execution Log & Next Actions
 - **2026-02-02**: Initial vision and component list defined.
 - **2026-02-03**: Integrated "Master Prompt" and "10-minute" constraint.
-- [ ] **Next Step**: Choose the first specific scenario to prototype during the Tuesday 11:00 session.
-- [ ] **Future**: Fork and enhance Wiz Demo repo to complement this lab.
 
 ---
 *Mantra: Synthesize to simplify, execute to conquer.*

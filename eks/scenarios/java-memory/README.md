@@ -5,8 +5,3 @@
 ```bash
 jcmd <pid> VM.native_memory summary.diff
 ```
-
-<!-- TODO: direct buffer -->
-<!-- TODO: load jar -->
-<!-- TODO: linux lazy landing -->
-<!-- TODO: pmap, flame graph -->
