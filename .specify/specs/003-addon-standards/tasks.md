@@ -1,48 +1,29 @@
-# Tasks: Addon Implementation
+# Tasks: Addon Standards Implementation
 
-## Phase 1: Shared Addons
-- [x] `shared/addons/cert-manager/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/metrics-server/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/ingress-nginx/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/external-dns/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/prometheus-stack/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/argocd/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/external-secrets/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `shared/addons/keda/` - install.sh, uninstall.sh, upgrade.sh, README.md
+**Input**: Design documents from `.specify/specs/003-addon-standards/`
+**Prerequisites**: plan.md (required), spec.md (required)
 
-## Phase 2: EKS Addons
-- [x] `eks/addons/aws-load-balancer-controller/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/cluster-autoscaler/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/karpenter/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/aws-ebs-csi-driver/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/eks-pod-identity-agent/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/cloudwatch-observability/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/secrets-store-csi-driver/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `eks/addons/aws-efs-csi-driver/` - install.sh, uninstall.sh, upgrade.sh, README.md
+## Phase 1: Shared Addons Standardization (User Story 1)
 
-## Phase 3: GKE Addons
-- [x] `gke/addons/workload-identity/` - Already done
-- [x] `gke/addons/config-connector/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `gke/addons/cloud-sql-proxy/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `gke/addons/filestore-csi/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `gke/addons/cloud-armor/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `gke/addons/anthos-service-mesh/` - install.sh, uninstall.sh, upgrade.sh, README.md
+- [x] T001 Standardize shared/addons/cert-manager/ (install, uninstall, upgrade, README)
+- [x] T002 Standardize shared/addons/metrics-server/ (install, uninstall, upgrade, README)
+- [x] T003 Standardize shared/addons/ingress-nginx/ (install, uninstall, upgrade, README)
+- [x] T004 Standardize shared/addons/external-dns/ (install, uninstall, upgrade, README)
+- [x] T005 Standardize shared/addons/prometheus-stack/ (install, uninstall, upgrade, README)
+- [x] T006 Standardize shared/addons/argocd/ (install, uninstall, upgrade, README)
+- [x] T007 Standardize shared/addons/external-secrets/ (install, uninstall, upgrade, README)
+- [x] T008 Standardize shared/addons/keda/ (install, uninstall, upgrade, README)
 
-## Phase 4: AKS Addons
-- [x] `aks/addons/appgw-ingress/` - Already done
-- [x] `aks/addons/keyvault-csi/` - Already done
-- [x] `aks/addons/aad-pod-identity/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `aks/addons/azure-disk-csi/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `aks/addons/azure-file-csi/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `aks/addons/azure-policy/` - install.sh, uninstall.sh, upgrade.sh, README.md
+## Phase 2: Platform Specific Addons (User Story 2)
 
-## Phase 5: Kind Addons
-- [x] `kind/addons/local-path-provisioner/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `kind/addons/metallb/` - install.sh, uninstall.sh, upgrade.sh, README.md
-- [x] `kind/addons/registry/` - install.sh, uninstall.sh, upgrade.sh, README.md
+- [x] T009 Standardize EKS addons (LB Controller, Autoscaler, Karpenter, EBS CSI, Pod Identity, etc.)
+- [x] T010 Standardize GKE addons (Config Connector, SQL Proxy, Filestore CSI, Cloud Armor, ASM)
+- [x] T011 Standardize AKS addons (AAD Pod ID, Disk CSI, File CSI, Azure Policy)
+- [x] T012 Standardize Kind addons (Local Path, MetalLB, Registry)
 
-## Verification
-- [x] Run `--help` on all install scripts
-- [x] Run `--version` on all install scripts
-- [x] Verify idempotency by running install twice
-- [x] Test uninstall on a Kind cluster
+## Phase 3: Verification & Compliance
+
+- [ ] T013 [P] Run --help validation on all standardized install scripts
+- [ ] T014 [P] Run --version validation on all standardized install scripts
+- [ ] T015 Verify idempotency of install scripts (double run test)
+- [ ] T016 Perform end-to-end uninstall test on Kind cluster

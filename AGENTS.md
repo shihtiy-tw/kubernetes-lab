@@ -94,6 +94,7 @@ See: `.opencode/command/*.md` for full command documentation
 - `speckit.specify` - Create new specifications
 - `speckit.plan` - Create implementation plans
 - `speckit.tasks` - Generate task lists
+- `speckit.taskstovibe` - Map tasks from tasks.md to vibe_kanban_create_task tool calls
 - `speckit.implement` - Execute implementation
 - `speckit.taskstovibe` - Convert tasks to Vibe Kanban tasks
 
