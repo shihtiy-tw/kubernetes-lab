@@ -16,33 +16,11 @@ Establish comprehensive code quality standards and automated enforcement.
 
 ## Tasks
 
-### Configuration Files (10 tasks)
-- [ ] Create .editorconfig for consistent formatting
-- [ ] Write .shellcheckrc configuration
-- [ ] Create .yamllint configuration for K8s manifests
-- [ ] Write .pre-commit-config.yaml
-- [ ] Create .hadolint.yaml for Dockerfiles
-- [ ] Write .markdownlint.json for documentation
-- [ ] Create .gitignore comprehensive rules
-- [ ] Write .gitattributes for file handling
-- [ ] Create .dockerignore files
-- [ ] Write .helmignore files
+### Spec 011: P1/US1 Configuration Files
+### Spec 011: P2/US2 Documentation Standards
+### Spec 011: P3/US3 Templates
+### Spec 011: P4/US4 Quality Gates
 
-### Documentation Standards (5 tasks)
-- [ ] Write code style guide (bash, YAML, Terraform)
-- [ ] Create naming conventions guide
-- [ ] Write error handling standards document
-- [ ] Create logging format specification
-- [ ] Write commit message convention guide
-
-### Templates (5 tasks)
-- [ ] Create commit message template (.gitmessage)
-- [ ] Write pull request template
-- [ ] Create issue templates (bug, feature, question)
-- [ ] Write script template library
-- [ ] Create documentation template
-
-### Quality Gates (5 tasks)
 - [ ] Write dependency update policy
 - [ ] Create code review checklist
 - [ ] Write security checklist

@@ -16,28 +16,11 @@ Create comprehensive CI/CD pipelines and automation workflows.
 
 ## Tasks
 
-### GitHub Actions Workflows (8 tasks)
-- [ ] Create linting workflow (.github/workflows/lint.yml)
-- [ ] Write testing workflow (.github/workflows/test.yml)
-- [ ] Create security scanning workflow (.github/workflows/security.yml)
-- [ ] Write documentation generation workflow (.github/workflows/docs.yml)
-- [ ] Create release automation workflow (.github/workflows/release.yml)
-- [ ] Write dependency update workflow
-- [ ] Create PR validation workflow
-- [ ] Write stale issues/PR workflow
+### Spec 012: P1/US1 GitHub Actions Workflows
+### Spec 012: P2/US2 Build Tools
+### Spec 012: P3/US3 Dependency Management
+### Spec 012: P4/US4 Release Automation
 
-### Build Tools (4 tasks)
-- [ ] Write comprehensive Makefile
-- [ ] Create Taskfile.yml (Task runner)
-- [ ] Write justfile (alternative to Make)
-- [ ] Create script runner wrapper
-
-### Dependency Management (3 tasks)
-- [ ] Create Renovate configuration (.github/renovate.json)
-- [ ] Write Dependabot configuration (.github/dependabot.yml)
-- [ ] Create dependency update policy
-
-### Release Automation (3 tasks)
 - [ ] Create semantic-release configuration
 - [ ] Write changelog generation configuration
 - [ ] Create version bumping automation

@@ -16,26 +16,11 @@ Improve developer experience with comprehensive tooling and configurations.
 
 ## Tasks
 
-### VS Code Configuration (5 tasks)
-- [ ] Create .vscode/settings.json with project settings
-- [ ] Write .vscode/tasks.json for common tasks
-- [ ] Create .vscode/launch.json for debugging
-- [ ] Write .vscode/extensions.json with recommended extensions
-- [ ] Create .vscode/snippets/ for code snippets
+### Spec 013: P1/US1 VS Code Configuration
+### Spec 013: P2/US2 Development Scripts
+### Spec 013: P3/US3 Developer Documentation
+### Spec 013: P4/US4 Container Development
 
-### Development Scripts (5 tasks)
-- [ ] Write environment setup script (./scripts/setup-dev.sh)
-- [ ] Create version checker script (./scripts/check-versions.sh)
-- [ ] Write dependency installer (./scripts/install-deps.sh)
-- [ ] Create alias definitions (.lab-aliases)
-- [ ] Write command completion scripts (bash/zsh)
-
-### Developer Documentation (3 tasks)
-- [ ] Create developer onboarding checklist
-- [ ] Write local development guide
-- [ ] Create debugging guide
-
-### Container Development (2 tasks)
 - [ ] Create .devcontainer configuration
 - [ ] Write Docker Compose for local development
 

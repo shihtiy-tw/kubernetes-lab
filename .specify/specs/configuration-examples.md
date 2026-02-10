@@ -16,24 +16,10 @@ Create comprehensive configuration examples for various deployment scenarios.
 
 ## Tasks
 
-### Example Configurations (10 tasks)
-- [ ] Create example configurations for each scenario (18 scenarios)
-- [ ] Write values.yaml templates for Helm charts
-- [ ] Create kustomization overlay examples (dev, staging, prod)
-- [ ] Write environment variable templates (.env.example)
-- [ ] Create cost-optimized configurations
-- [ ] Write high-availability configurations
-- [ ] Create multi-region configurations
-- [ ] Write disaster recovery configurations
-- [ ] Create security-hardened configurations
-- [ ] Write development vs production config comparisons
+### Spec 014: P1/US1 Example Configurations
+### Spec 014: P2/US2 Configuration Validation
+### Spec 014: P3/US3 Deployment Patterns
 
-### Configuration Validation (3 tasks)
-- [ ] Create JSON Schema for configuration validation
-- [ ] Write configuration validator script
-- [ ] Create configuration documentation generator
-
-### Deployment Patterns (5 tasks)
 - [ ] Create blue-green deployment example
 - [ ] Write canary deployment example
 - [ ] Create rolling update example

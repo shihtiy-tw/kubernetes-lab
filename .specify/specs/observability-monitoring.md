@@ -16,21 +16,11 @@ Define comprehensive observability and monitoring configurations.
 
 ## Tasks
 
-### Dashboard Definitions (3 tasks)
-- [ ] Create Grafana dashboard JSON for each addon (13 dashboards)
-- [ ] Write custom dashboard for scenario monitoring
-- [ ] Create cluster health dashboard
+### Spec 015: P1/US1 Dashboard Definitions
+### Spec 015: P2/US2 Alert Definitions
+### Spec 015: P3/US3 Logging Configuration
+### Spec 015: P4/US4 Metrics & SLOs
 
-### Alert Definitions (3 tasks)
-- [ ] Write Prometheus alert rules for addons
-- [ ] Create alert rule templates
-- [ ] Define alert routing and grouping
-
-### Logging Configuration (2 tasks)
-- [ ] Create Fluent Bit configuration templates
-- [ ] Write log parsing rules
-
-### Metrics & SLOs (3 tasks)
 - [ ] Write metrics collection specifications
 - [ ] Create SLO/SLI definitions document
 - [ ] Define error budget policies

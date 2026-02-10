@@ -16,28 +16,11 @@ Build comprehensive testing infrastructure without requiring live cluster execut
 
 ## Tasks
 
-### Test Framework Setup (5 tasks)
-- [ ] Create BATS (Bash Automated Testing System) configuration
-- [ ] Write test helper functions library
-- [ ] Create test fixture directory structure
-- [ ] Set up test data generators for scenarios
-- [ ] Create mock AWS responses for unit tests
+### Spec 010: P1/US1 Test Framework Setup
+### Spec 010: P2/US2 KUTTL Test Definitions
+### Spec 010: P3/US3 Test Specifications
+### Spec 010: P4/US4 Test Documentation
 
-### KUTTL Test Definitions (5 tasks)
-- [ ] Create KUTTL test case templates
-- [ ] Write test assertions for each addon
-- [ ] Create test step definitions for scenarios
-- [ ] Define expected resource states
-- [ ] Write negative test cases
-
-### Test Specifications (5 tasks)
-- [ ] Write integration test plans
-- [ ] Create performance test specifications
-- [ ] Write chaos engineering test plans
-- [ ] Create security test cases (OWASP-based)
-- [ ] Define smoke test specifications
-
-### Test Documentation (3 tasks)
 - [ ] Create test coverage report configuration
 - [ ] Write testing guide for contributors
 - [ ] Document test execution procedures
