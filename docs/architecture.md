@@ -4,7 +4,7 @@ This document describes the high-level architecture of kubernetes-lab.
 
 ## System Context
 
-```mermaid
+``` mermaid
 graph TB
     subgraph "kubernetes-lab"
         A[CLI Scripts] --> B[Addons]
@@ -24,13 +24,14 @@ graph TB
 
 ### Core Components
 
-| Component | Purpose | Location |
-|-----------|---------|----------|
-| **EKS Addons** | Kubernetes addon installers | `eks/addons/` |
-| **EKS Scenarios** | Integration workflows | `eks/scenarios/` |
-| **Kind** | Local cluster management | `kind/` |
-| **Shared** | Common utilities | `shared/` |
-| **Tests** | Test suites | `tests/` |
+| Component         | Purpose                     | Location         |
+| ----------------- | --------------------------- | ---------------- |
+| **EKS Addons**    | Kubernetes addon installers | `eks/addons/`    |
+| **EKS Scenarios** | Integration workflows       | `eks/scenarios/` |
+| **Kind**          | Local cluster management    | `kind/`          |
+| **Shared**        | Common utilities            | `shared/`        |
+| **Tests**         | Test suites                 | `tests/`         |
+
 
 ### Directory Structure
 
@@ -73,7 +74,7 @@ addons/<addon-name>/
 
 All scripts follow [CLI 12-Factor principles](https://12factor.net/):
 
-```bash
+``` bash
 # Every script supports:
 ./install.sh --help       # Usage information
 ./install.sh --version    # Version information
@@ -83,7 +84,7 @@ All scripts follow [CLI 12-Factor principles](https://12factor.net/):
 
 ## Data Flow
 
-```mermaid
+``` mermaid
 sequenceDiagram
     participant User
     participant Script
@@ -108,7 +109,7 @@ sequenceDiagram
 
 ### Pattern 1: Single Addon
 
-```bash
+``` bash
 ./eks/addons/ingress-nginx/install.sh \
   --cluster my-eks \
   --namespace ingress-nginx
@@ -116,7 +117,7 @@ sequenceDiagram
 
 ### Pattern 2: Scenario (Multiple Addons)
 
-```bash
+``` bash
 ./eks/scenarios/api-gateway/deploy.sh \
   --cluster my-eks \
   --dry-run
@@ -126,7 +127,7 @@ Deploys: ingress-nginx, cert-manager, external-dns in correct order.
 
 ### Pattern 3: Local Development
 
-```bash
+``` bash
 # Create local cluster
 ./kind/create-cluster.sh --name dev
 
@@ -140,7 +141,7 @@ Deploys: ingress-nginx, cert-manager, external-dns in correct order.
 
 All scripts use consistent logging:
 
-```bash
+``` bash
 [INFO]  Starting installation...
 [WARN]  No values file specified, using defaults
 [ERROR] Cluster not found: my-eks
@@ -149,7 +150,7 @@ All scripts use consistent logging:
 
 ### Error Handling
 
-```bash
+``` bash
 set -euo pipefail
 trap cleanup EXIT
 ```
@@ -166,12 +167,13 @@ Priority (high to low):
 
 ## Integration Points
 
-| System | Integration | Method |
-|--------|-------------|--------|
+| System  | Integration        | Method          |
+| ------- | ------------------ | --------------- |
 | AWS EKS | Cluster management | aws-cli, eksctl |
-| Helm | Package management | helm CLI |
-| kubectl | K8s operations | kubectl CLI |
-| Kind | Local clusters | kind CLI |
+| Helm    | Package management | helm CLI        |
+| kubectl | K8s operations     | kubectl CLI     |
+| Kind    | Local clusters     | kind CLI        |
+
 
 ## Security Considerations
 
@@ -180,7 +182,3 @@ Priority (high to low):
 - Secrets via external-secrets or KMS
 - Network policies enabled by default
 - Pod security standards enforced
-
----
-
-*Last updated: 2026-01-31*
