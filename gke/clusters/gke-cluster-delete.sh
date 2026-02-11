@@ -1,25 +1,18 @@
 #!/usr/bin/env bash
-#
-# gke-cluster-delete.sh - Delete a GKE cluster
-# Part of kubernetes-lab (Spec 002: Cloud Platform Standard)
-#
 set -euo pipefail
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 SCRIPT_NAME="$(basename "$0")"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Logging functions
 log_info()  { echo -e "${GREEN}[INFO]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 log_warn()  { echo -e "${YELLOW}[WARN]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $(date '+%Y-%m-%d %H:%M:%S') $*" >&2; }
 
-# Default values
 CLUSTER_NAME=""
 REGION=""
 ZONE=""

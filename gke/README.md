@@ -27,7 +27,16 @@
 
 4. **Required APIs** enabled
    ```bash
-   gcloud services enable container.googleapis.com
+   gcloud services enable container.googleapis.com \
+                          compute.googleapis.com \
+                          iam.googleapis.com \
+                          cloudresourcemanager.googleapis.com \
+                          dns.googleapis.com
+   ```
+
+5. **gke-gcloud-auth-plugin** (for Kubernetes 1.26+)
+   ```bash
+   gcloud components install gke-gcloud-auth-plugin
    ```
 
 ---
