@@ -1,0 +1,50 @@
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: ${EKS_CLUSTER_NAME}
+  version: "${CLUSTER_VERSION}"
+  region: ${EKS_CLUSTER_REGION}
+  tags:
+    auto-delete: "no"
+    auto-stop: "no"
+nodeGroups:
+  - name: self-managed-nodegroup-${NODEGROUP_CONFIG}
+    instanceType: ${NODEGROUP_SIZE}
+    desiredCapacity: 1
+    amiFamily: AmazonLinux2023
+    ami: ${CUSTOM_AMI}
+    # For AL2023, bootstapping is handled by nodeadm.
+    # We provide the NodeConfig object as the bootstrap command (UserData).
+    # https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/examples/
+    overrideBootstrapCommand: |
+      apiVersion: node.eks.aws/v1alpha1
+      kind: NodeConfig
+      spec:
+        cluster:
+          name: ${EKS_CLUSTER_NAME}
+          apiServerEndpoint: ${API_SERVER_ENDPOINT}
+          certificateAuthority: ${CERTIFICATE_AUTHORITY}
+          cidr: ${SERVICE_CIDR}
+        kubelet:
+          config:
+            shutdownGracePeriod: 30s
+            featureGates:
+              DisableKubeletCloudCredentialProviders: true
+          flag:
+            v: 8
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonSSMPatchAssociation
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+    ssh:
+      allow: false
+    tags:
+      auto-delete: "no"
+      auto-stop: "no"
+      k8s.io/cluster-autoscaler/${EKS_CLUSTER_NAME}: "owned"
+      k8s.io/cluster-autoscaler/enabled: "true"

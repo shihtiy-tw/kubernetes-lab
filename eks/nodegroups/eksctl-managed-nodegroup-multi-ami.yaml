@@ -1,0 +1,116 @@
+---
+# =============================================================================
+# eksctl Managed NodeGroup - Multi-AMI Template
+# =============================================================================
+#
+# Purpose:
+#   Creates two managed node groups, each with its own custom AMI and
+#   instance type. Both AMI IDs and instance types can be auto-detected.
+#
+# How it works:
+#   The setup script (setup-managed-nodegroup.sh) resolves each AMI via
+#   `aws ec2 describe-images` filters, then detects the minimal compatible
+#   instance type for each AMI's architecture (x86_64 → t3.micro, arm64 →
+#   t4g.micro, etc.) using `aws ec2 describe-instance-types`.
+#
+# Usage:
+#   cd eks
+#
+#   # Fully automatic (AMIs discovered, instance types auto-detected):
+#   ./utils/setup-managed-nodegroup.sh 1.33 us-east-1 minimal multi-ami
+#
+#   # Manual AMIs, auto-detect instance types:
+#   export CUSTOM_AMI_1="ami-0a72b8b58d9b94890"
+#   export CUSTOM_AMI_2="ami-0108225957bcbd696"
+#   ./utils/setup-managed-nodegroup.sh 1.33 us-east-1 minimal multi-ami
+#
+#   # Manual AMIs + manual instance types:
+#   export CUSTOM_AMI_1="ami-0a72b8b58d9b94890"  INSTANCE_TYPE_1="t3.medium"
+#   export CUSTOM_AMI_2="ami-0108225957bcbd696"  INSTANCE_TYPE_2="t4g.small"
+#   ./utils/setup-managed-nodegroup.sh 1.33 us-east-1 minimal multi-ami
+#
+# Variables (auto-populated via envsubst):
+#   ${EKS_CLUSTER_NAME}     - Cluster name from config.sh
+#   ${EKS_CLUSTER_REGION}   - AWS region
+#   ${CLUSTER_VERSION}      - EKS version
+#   ${CUSTOM_AMI_1/2}       - AMI IDs (discovered or pre-exported)
+#   ${NODEGROUP_SIZE_1/2}   - Instance types per AMI (auto-detected or exported)
+#   ${INSTANCE_TYPE_1/2}    - Instance types without dots (for naming)
+# =============================================================================
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: ${EKS_CLUSTER_NAME}
+  version: "${CLUSTER_VERSION}"
+  region: ${EKS_CLUSTER_REGION}
+  tags:
+    auto-delete: "no"
+    auto-stop: "no"
+
+managedNodeGroups:
+  # --- Node group 1: Bottlerocket ---
+  - name: managed-ng-bottlerocket-1-${INSTANCE_TYPE_1}
+    instanceType: ${NODEGROUP_SIZE_1}
+    desiredCapacity: 1
+    ami: ${CUSTOM_AMI_1}
+    amiFamily: Bottlerocket
+
+    # Bottlerocket configuration replaces overrideBootstrapCommand
+    bottlerocket:
+      enableAdminContainer: true
+      settings:
+        kubernetes:
+          # cluster-name: ${EKS_CLUSTER_NAME}
+          # api-server: ${API_SERVER_ENDPOINT}
+          # cluster-certificate: ${CERTIFICATE_AUTHORITY}
+          # IMPORTANT: Bottlerocket often requires the Cluster DNS IP explicitly if using custom AMIs.
+          # This is usually the .10 address of your service CIDR (e.g., 10.100.0.10 or 172.20.0.10).
+          # cluster-dns-ip: "10.100.0.10"
+
+          # NEW: Native setting for Kubelet verbosity (Debug level)
+          # "2" is info, "4" is debug, "8" is extreme debug (full request/response logging)
+          log-level: 8
+
+          shutdown-grace-period: "30s"
+
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    ssh:
+      allow: false
+    tags:
+      auto-delete: "no"
+      auto-stop: "no"
+
+  # --- Node group 2: Bottlerocket ---
+  - name: managed-ng-bottlerocket-2-${INSTANCE_TYPE_2}
+    instanceType: ${NODEGROUP_SIZE_2}
+    desiredCapacity: 1
+    amiFamily: Bottlerocket
+    ami: ${CUSTOM_AMI_2}
+
+    bottlerocket:
+      enableAdminContainer: true
+      settings:
+        kubernetes:
+          # cluster-name: ${EKS_CLUSTER_NAME}
+          # api-server: ${API_SERVER_ENDPOINT}
+          # cluster-certificate: ${CERTIFICATE_AUTHORITY}
+          # cluster-dns-ip: "10.100.0.10" # See note above
+          # NEW: Native setting for Kubelet verbosity
+          log-level: 8
+
+          shutdown-grace-period: "30s"
+
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    ssh:
+      allow: false
+    tags:
+      auto-delete: "no"
+      auto-stop: "no"
