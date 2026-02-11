@@ -16,14 +16,17 @@
 
 ```
 kubernetes-lab/
-├── kind/ ← 🟢 LOCAL TESTING
-├── eks/ ← 🔵 ACTIVE (migrated)
-│   ├── addons/
-│   ├── clusters/
-│   ├── scenarios/
-│   └── ...
-├── gke/ (placeholder)
-└── aks/ (placeholder)
+├── .github/      # CI/CD Workflows
+├── .opencode/    # Agent Commands
+├── .specify/     # Specs & Plans
+├── aks/          # Azure (AKS)
+├── docs/         # Architecture & Documentation
+├── eks/          # AWS (EKS)
+├── gke/          # Google (GKE)
+├── kind/         # Local (Kind)
+├── scripts/      # Repo Utilities
+├── shared/       # Cross-platform Resources
+└── tests/        # Integration Tests
 ```
 
 ---

@@ -111,13 +111,13 @@ pre-commit-install: ## Install pre-commit hooks
 # =============================================================================
 
 list: ## List clusters and node groups
-	@bash $(PWD)/labs/resources/scripts/list-cluster-nodegroup.sh 2>/dev/null || true
+	@bash $(PWD)/eks/utils/list-cluster-nodegroup.sh 2>/dev/null || true
 
 kind-create: ## Create Kind cluster
-	@./kind/create-cluster.sh --name dev-cluster
+	@./kind/clusters/kind-cluster-create.sh --name dev-cluster
 
 kind-delete: ## Delete Kind cluster
-	@./kind/delete-cluster.sh --name dev-cluster
+	@./kind/clusters/kind-cluster-delete.sh --name dev-cluster
 
 kind-list: ## List Kind clusters
 	@kind get clusters
