@@ -1,7 +1,7 @@
 # kubernetes-lab Makefile
 # Main entry point for development tasks
 
-.PHONY: help lint test format clean setup list all default
+.PHONY: help init test deploy clean setup list all default
 .PHONY: lint-shell lint-yaml lint-markdown lint-docker
 .PHONY: format-shell format-terraform
 .PHONY: test-bats test-cli test-helm
@@ -21,6 +21,17 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 default: help
+
+# =============================================================================
+# Lifecycle
+# =============================================================================
+
+init: setup pre-commit-install ## Initialize development environment
+
+deploy: ## Deploy a scenario (usage: make deploy scenario=load-balancers cluster=my-cluster)
+	@if [ -z "$(scenario)" ]; then echo "Error: scenario is required"; exit 1; fi
+	@if [ -z "$(cluster)" ]; then echo "Error: cluster is required"; exit 1; fi
+	@./eks/scenarios/$(scenario)/deploy.sh --cluster $(cluster)
 
 # =============================================================================
 # Help
