@@ -20,6 +20,11 @@ managedNodeGroups:
       apiVersion: node.eks.aws/v1alpha1
       kind: NodeConfig
       spec:
+        cluster:
+          name: ${EKS_CLUSTER_NAME}
+          apiServerEndpoint: ${API_SERVER_ENDPOINT}
+          certificateAuthority: ${CERTIFICATE_AUTHORITY}
+          cidr: ${SERVICE_CIDR}
         kubelet:
           config:
             shutdownGracePeriod: 30s
@@ -41,7 +46,7 @@ managedNodeGroups:
     ssh:
       allow: false
     tags:
-      auto-delete: 'no'
-      auto-stop: 'no'
-      k8s.io/cluster-autoscaler/${EKS_CLUSTER_NAME}: 'owned'
-      k8s.io/cluster-autoscaler/enabled: 'true'
+      auto-delete: "no"
+      auto-stop: "no"
+      k8s.io/cluster-autoscaler/${EKS_CLUSTER_NAME}: "owned"
+      k8s.io/cluster-autoscaler/enabled: "true"

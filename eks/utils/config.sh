@@ -1,12 +1,18 @@
 #!/bin/bash
 
-# Check if at least one argument is provided
-if [ $# -eq 0 ]; then
-    echo "No arguments provided. Using default values."
-else
+# Check if at least one argument is provided (Legacy Mode)
+if [ $# -gt 0 ]; then
     # Set EKS_CLUSTER_NAME if provided
     if [ "$1" != "" ]; then
-        EKS_CLUSTER_NAME="$(echo "$1" | sed 's/^/EKS-Lab-/; s/\./-/')"
+        # Only append prefix/suffix if it's a raw version number or base name
+        if [[ "$1" =~ ^[0-9]+\.[0-9]+$ ]]; then
+             # Legacy behavior: Version passed as arg 1 -> EKS-Lab-Version
+             export CLUSTER_VERSION="$1"
+             # Name will be constructed later
+        else
+             # Assume full name or base name provided
+             EKS_CLUSTER_NAME="$1"
+        fi
     fi
 
     # Set EKS_CLUSTER_REGION if provided
@@ -39,17 +45,32 @@ else
     fi
 fi
 
-# Get AZs for the specified region in the desired format
-# AZ_ARRAY=$(aws ec2 describe-availability-zones \
-#     --region "$EKS_CLUSTER_REGION" \
-#     --query 'AvailabilityZones[?State==`available`].ZoneName' \
-#     --output json | sed 's/\[/["/;s/\]/"]/' | sed 's/,/", "/g' | tr -d '\n\r\t ')
-
-# Set default values if not provided
+# Set default values if not provided (env vars take precedence)
 export EKS_CLUSTER_REGION=${EKS_CLUSTER_REGION:-"us-east-1"}
-export EKS_CLUSTER_NAME=${EKS_CLUSTER_NAME:-"EKS-Lab"}-${CLUSTER_CONFIG}
 export CLUSTER_CONFIG=${CLUSTER_CONFIG:-"minimal"}
-export CLUSTER_VERSION="${1:-1.30}"
+export CLUSTER_VERSION="${CLUSTER_VERSION:-1.30}"
 export CLUSTER_FILE_LOCATION="$(echo "$CLUSTER_VERSION"| sed 's/\./-/')"
 
-echo "Configuring cluster $EKS_CLUSTER_NAME in region $EKS_CLUSTER_REGION with AZs: $AZ_ARRAY"
+# Construct name ONLY if not already set or detected
+if [[ -z "${EKS_CLUSTER_NAME:-}" ]]; then
+    export EKS_CLUSTER_NAME="EKS-Lab-${CLUSTER_FILE_LOCATION}-${CLUSTER_CONFIG}"
+elif [[ "$EKS_CLUSTER_NAME" == "EKS-Lab-"* ]]; then
+    # Already formatted, keep it
+    :
+elif [[ "$EKS_CLUSTER_NAME" == *"${CLUSTER_CONFIG}"* ]]; then
+     # Config in name, keep it
+    :
+else
+    # Append suffix if missing (legacy behavior helper) but usually safe to leave alone if user supplied it
+    # We will trust the user provided name if it doesn't look like a raw version
+    if [[ ! "$EKS_CLUSTER_NAME" =~ "EKS-Lab" ]]; then
+         export EKS_CLUSTER_NAME="EKS-Lab-${CLUSTER_FILE_LOCATION}-${CLUSTER_CONFIG}"
+    fi
+fi
+
+# Get AZs for the specified region if needed (usually handled by eksctl, but maybe used in templates)
+# AZ_ARRAY is often environment dependent or fixed
+# For now, we leave AZ_ARRAY logic as comment or rely on passed env vars
+export AZ_ARRAY=${AZ_ARRAY:-"us-east-1a,us-east-1b,us-east-1c"}
+
+echo "Configuring cluster $EKS_CLUSTER_NAME in region $EKS_CLUSTER_REGION"
