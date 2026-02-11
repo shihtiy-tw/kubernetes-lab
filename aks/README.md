@@ -15,12 +15,20 @@
    az account set --subscription YOUR_SUBSCRIPTION_ID
    ```
 
-2. **kubectl** installed
+2. **Required Resource Providers** registered
+   ```bash
+   az provider register --namespace Microsoft.ContainerService
+   az provider register --namespace Microsoft.Compute
+   az provider register --namespace Microsoft.Network
+   az provider register --namespace Microsoft.Storage
+   ```
+
+3. **kubectl** installed
    ```bash
    az aks install-cli
    ```
 
-3. **Helm** (for addons)
+4. **Helm** (for addons)
    ```bash
    # https://helm.sh/docs/intro/install/
    ```
