@@ -123,3 +123,9 @@ k8s.manifest.validate --platform eks --path eks/scenarios/
 # Debugging
 k8s.logs --platform aks --cluster test --deployment nginx
 ```
+
+## Active Technologies
+- Bash 4.x/5.x + `kind`, `eksctl`, `gcloud`, `az`, `kubectl`, `helm` (005-platform-aware-wrappers)
+
+## Recent Changes
+- 005-platform-aware-wrappers: Added Bash 4.x/5.x + `kind`, `eksctl`, `gcloud`, `az`, `kubectl`, `helm`
