@@ -32,11 +32,14 @@ kubernetes-lab/
 
 | Directory | Purpose |
 |-----------|---------|
-| `shared/` | Cross-platform plugins, manifests, charts |
+| `shared/` | Cross-platform resources (Helm charts, manifests) |
 | `kind/` | Local testing with kind clusters |
 | `eks/` | AWS EKS implementation |
 | `gke/` | Google GKE implementation |
 | `aks/` | Azure AKS implementation |
+| `docs/` | Architecture and design documentation |
+| `scripts/` | Repository-level utility scripts (linting, setup) |
+| `tests/` | Cross-platform integration tests (KUTTL) |
 
 Each implementation has:
 - `addons/` - Platform-specific add-ons
@@ -109,6 +112,7 @@ k8s.addon.install --platform eks --addon ingress-nginx --cluster prod
 k8s.scenario.run --platform gke --scenario load-balancers --cluster staging
 
 # Testing and validation
+make check-structure
 k8s.test.integration --platform kind --cluster dev-local
 k8s.manifest.validate --platform eks --path eks/scenarios/
 

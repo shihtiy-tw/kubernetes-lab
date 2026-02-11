@@ -10,9 +10,9 @@ due: 2026-03-02
 kind: horizon
 author: agent
 created: 2026-02-03T20:00:00
-dateModified: 2026-02-03T20:00:00
+dateModified: 2026-02-11T00:00:00
 modified:
-  - 2026-02-03T20:00:00
+  - 2026-02-11T00:00:00
 ---
 
 # 🏗️ Project Spec: High-Speed Multi-Cloud K8s Lab Engine
@@ -38,11 +38,34 @@ For every scenario, the engine must define equivalent resources for:
 4.  **Operational Addons**:
     - **Observability**: Monitoring (Prometheus/Grafana) & Observability stack.
     - **Scaling**: Scalability configurations (HPA/VPA).
-    - **Security**: Network Policies, OPA/Gatekeeper, and other security addons.
+        - **Security**: Network Policies, OPA/Gatekeeper, and other security addons.
 
 ---
 
-## ⚙️ Implementation Strategy (Antigravity Master Prompt)
+## 📂 Project Structure
+
+Adherence to this structure is mandatory (see **Spec 001**).
+
+```text
+kubernetes-lab/
+├── aks/                # Azure Kubernetes Service implementation
+├── docs/               # Architecture and design documentation
+├── eks/                # Amazon Elastic Kubernetes Service implementation
+├── gke/                # Google Kubernetes Engine implementation
+├── kind/               # Local Kind cluster implementation
+├── scripts/            # Repository-level utility scripts (linting, setup)
+├── shared/             # Cross-platform resources (Helm charts, manifests)
+├── tests/              # Cross-platform integration tests (KUTTL)
+├── AGENTS.md           # Master context file for AI agents
+├── BACKLOG.md          # Future work and idea parking lot
+├── Makefile            # Standard build targets
+└── README.md           # Entry point documentation
+```
+
+---
+
+## ⚙️ Implementation Strategy
+ (Antigravity Master Prompt)
 
 Use this prompt to task Antigravity with generating specific lab scenarios:
 

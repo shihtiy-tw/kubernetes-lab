@@ -3,6 +3,7 @@
 
 .PHONY: help lint test format clean setup list all default
 .PHONY: lint-shell lint-yaml lint-markdown lint-docker
+.PHONY: check-structure
 .PHONY: format-shell format-terraform
 .PHONY: test-bats test-cli test-helm
 .PHONY: pre-commit pre-commit-install
@@ -46,7 +47,7 @@ check-versions: ## Check tool versions
 # Linting
 # =============================================================================
 
-lint: lint-shell lint-yaml lint-markdown ## Run all linters
+lint: check-structure lint-shell lint-yaml lint-markdown ## Run all linters
 
 lint-shell: ## Lint shell scripts
 	@echo -e "$(BLUE)Running ShellCheck...$(RESET)"
@@ -62,6 +63,14 @@ lint-markdown: ## Lint Markdown files
 
 lint-docker: ## Lint Dockerfiles
 	@find . -name "Dockerfile*" -exec hadolint {} \; 2>/dev/null || true
+
+# =============================================================================
+# Compliance
+# =============================================================================
+
+check-structure: ## Verify project structure adherence to Spec 001
+	@echo -e "$(BLUE)Validating project structure...$(RESET)"
+	@./scripts/validate-structure.sh
 
 # =============================================================================
 # Formatting
