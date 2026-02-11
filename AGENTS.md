@@ -100,6 +100,7 @@ See: `.opencode/command/*.md` for full command documentation
 - `speckit.specify` - Create new specifications
 - `speckit.plan` - Create implementation plans
 - `speckit.tasks` - Generate task lists
+- `speckit.taskstovibe` - Sync tasks to Vibe Kanban
 - `speckit.implement` - Execute implementation
 
 ### Kubernetes Operations (Platform-Aware)

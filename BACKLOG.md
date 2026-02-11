@@ -10,6 +10,7 @@
 - [ ] Complete AKS cluster provisioning scripts
 - [ ] Add KUTTL integration tests for shared plugins
 - [ ] Test platform-aware commands end-to-end
+- [ ] **Update Makefile to support CSP platforms** (eks, gke, aks)
 
 ---
 
