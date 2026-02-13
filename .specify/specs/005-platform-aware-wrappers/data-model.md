@@ -16,11 +16,25 @@ This document defines the mapping between generic flags used by the wrapper scri
 | Generic Flag | Logic / Mapping | Target Env Var (Optional) |
 |--------------|-----------------|--------------------------|
 | `--platform` | Used for dispatching. Internal to wrapper. | `K8S_PLATFORM` |
-| `--name`     | Pass through as `--name`. | `CLUSTER_NAME` |
+| `--name`     | Pass through as part of name pattern. | `CLUSTER_NAME` |
 | `--region`   | Maps to `--region` (EKS/GKE), `--location` (AKS). | `AWS_REGION`, `GOOGLE_REGION`, `AZURE_LOCATION` |
 | `--project`  | Maps to `--project` (GKE), `--resource-group` (AKS). | `GOOGLE_PROJECT`, `AZURE_RESOURCE_GROUP` |
 | `--version`  | Maps to `--k8s-version`. | `K8S_VERSION` |
+| `--config`   | Cluster config profile (minimal, standard, full). | `CONFIG_TYPE` |
 | `--cni`      | Pass through as `--cni`. Validation per platform. | `CNI_PLUGIN` |
+
+## Naming Convention Logic
+
+To ensure consistency and avoid collisions across platforms, the wrapper scripts generate a canonical name for the Cluster and the local `kubectl` Context:
+
+**Pattern**: `{platform}-{version}-{config}-{name}`
+
+- **platform**: `kind`, `eks`, `gke`, `aks`
+- **version**: Kubernetes version (e.g., `1.29` becomes `1-29`)
+- **config**: Profile name (e.g., `standard`)
+- **name**: User-provided identifier (e.g., `lab`)
+
+*Example*: `eks-1-29-standard-lab`
 
 ## Validation Rules
 

@@ -11,7 +11,7 @@ This feature implements a suite of "Platform-Aware" Bash wrapper scripts in the 
 
 **Language/Version**: Bash 4.x/5.x
 **Primary Dependencies**: `kind`, `eksctl`, `gcloud`, `az`, `kubectl`, `helm`
-**Storage**: N/A
+**Database**: N/A (Filesystem based)
 **Testing**: BATS for unit testing the flag translation logic
 **Target Platform**: Linux/macOS
 **Project Type**: CLI Wrapper Suite
@@ -24,10 +24,10 @@ This feature implements a suite of "Platform-Aware" Bash wrapper scripts in the 
 
 | Principle | Adherence | Justification |
 |-----------|-----------|---------------|
-| Cloud-Agnostic First | ✅ High | Specifically designed to hide cloud differences. |
-| CLI 12-Factor | ✅ High | Wrappers will strictly follow the project's 12-factor template. |
-| Test-First Strategy | ✅ Med | Unit tests for flag parsing will be added. |
-| Agent 12-Factor | ✅ High | Updating agent context to include these new commands. |
+| Cloud-Agnostic First | ✅ High | Specifically designed to hide cloud differences and unify resource naming. |
+| CLI 12-Factor | ✅ High | Wrappers will strictly follow the project's 12-factor template and provide dry-run support. |
+| Test-First Strategy | ✅ Med | BATS tests for flag parsing logic are included in the task list. |
+| Agent 12-Factor | ✅ High | Agent context (AGENTS.md) has been updated with new command definitions. |
 
 ## Project Structure
 
@@ -49,12 +49,20 @@ scripts/
 ├── k8s.cluster.create.sh   # Unified cluster creation
 ├── k8s.cluster.delete.sh   # Unified cluster deletion
 ├── k8s.addon.install.sh    # Unified addon installation
-└── k8s.logs.sh             # Unified log retrieval
+├── k8s.logs.sh             # Unified log retrieval
+└── k8s.scenario.run.sh      # Unified lab scenario deployment
 ```
 
 ## Structure Decision
 
-The **Dispatcher Pattern** is selected. Root scripts will handle the `--platform` flag and common parameter mapping, then `exec` or call the platform-specific scripts in their respective directories. This maintains the modularity of each platform while providing the requested root-level execution.
+The **Dispatcher Pattern** is selected. Root scripts will handle the `--platform` flag and common parameter mapping, then `exec` or call the platform-specific scripts in their respective directories. 
+
+**Key Design Decisions**:
+1. **Naming Convention**: Clusters and contexts will be named following the pattern `{platform}-{version}-{config}-{name}` to ensure uniqueness and auditability.
+2. **Explicit Mapping**: Common flags (`--region`, `--project`, `--version`, `--config`) are explicitly mapped to platform-specific equivalents.
+3. **Array-based Forwarding**: Remaining arguments are forwarded using Bash arrays (`"${FORWARD_ARGS[@]}"`) to preserve quoting.
+4. **Interactive Safety**: `k8s.cluster.delete.sh` will prompt for confirmation unless `--yes` or `--force` is provided.
+5. **Dependency Validation**: Before dispatching, the wrapper verifies the required platform CLI (e.g., `eksctl`) is in the PATH and issues a warning if the version is outdated.
 
 ## Complexity Tracking
 

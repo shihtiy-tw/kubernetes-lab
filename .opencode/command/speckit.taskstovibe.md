@@ -16,14 +16,13 @@ $ARGUMENTS
    - Call `vibe_kanban_list_projects`.
    - Find the project with a name matching the current repository directory name (e.g., `kubernetes-lab`).
    - If multiple matches or no matches, prompt user for selection.
-3. **Load Tasks**: Read `tasks.md` from FEATURE_DIR.
+3. **Load User Stories**: Read `spec.md` from FEATURE_DIR.
 4. **Task Creation**:
-   - Parse each task from the `tasks.md` checklist format.
-   - Extract the Spec ID from the `FEATURE_DIR` name (e.g., `008` from `008-lab-governance`).
-   - For each task, call `vibe_kanban_create_task` with:
+   - Parse each **User Story** from the `spec.md` file (sections starting with `### User Story`).
+   - Extract the Spec ID from the `FEATURE_DIR` name (e.g., `001`).
+   - For each User Story, call `vibe_kanban_create_task` with:
      - `project_id`: The identified project ID.
-     - `title`: Standardized format: `Spec {Spec_ID}: {Priority}/{Story} {Description}`.
-       - **Example**: `Spec 008: P1/US1 Implement Sync Logic`
-       - If Priority or Story is missing, omit those parts (e.g., `Spec 008: Setup Project Structure`).
-     - `description`: Full task line including TaskID, labels, and file paths.
-5. **Report**: Output the number of tasks created and the link to the Kanban board if available.
+     - `title`: Standardized format: `Spec {Spec_ID}: {Priority}/US{N} {Story_Title}`.
+       - **Example**: `Spec 001: P1/US1 Multi-Language Kernel Exploration`
+     - `description`: The full text of the User Story section, including the "As a... I want... So that..." statement, Independent Test, and Acceptance Scenarios.
+5. **Report**: Output the number of User Stories synchronized to the Kanban board.
